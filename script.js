@@ -69,7 +69,16 @@ document.getElementById('start-btn').addEventListener('click', startQuiz);
 document.getElementById('next-btn').addEventListener('click', nextQuestion);
 uploadButton.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', handleFileUpload);
-saveResultButton.addEventListener('click', saveResult);
+
+// 姓名輸入和題目上傳的驗證
+function validateStartConditions() {
+    const nameInput = document.getElementById('student-name');
+    const startButton = document.getElementById('start-btn');
+    const name = nameInput.value.trim();
+    const hasQuestions = currentQuiz.questions.length > 0;
+    
+    startButton.disabled = !name || !hasQuestions;
+}
 
 // 處理檔案上傳
 async function handleFileUpload(event) {
@@ -93,7 +102,11 @@ async function handleFileUpload(event) {
         uploadButton.innerHTML = '<i class="fas fa-file-upload"></i> 匯入題目';
         uploadButton.classList.remove('success');
     }
+    validateStartConditions();
 }
+
+// 監聽姓名輸入
+document.getElementById('student-name').addEventListener('input', validateStartConditions);
 
 // 從檔案載入題目的函式
 async function loadQuestionsFromFile(file) {
@@ -313,16 +326,15 @@ function nextQuestion() {
     }
 }
 
-// 顯示結果
-function showResults() {
+// 顯示結果並自動儲存
+async function showResults() {
     quizScreen.classList.remove('active');
     resultScreen.classList.add('active');
 
-    // 計算最終得分（轉換為100分制）
+    const studentName = document.getElementById('student-name').value.trim();
     const finalScoreValue = Math.round((currentQuiz.score / CONFIG.questionsPerQuiz) * 100);
     finalScore.textContent = finalScoreValue;
-
-    // 計算貢獻度
+    
     const contributionValue = finalScoreValue;
     contributionScore.textContent = contributionValue;
 
@@ -354,18 +366,15 @@ function showResults() {
             ${wrongQuestionsHTML}
         `;
     } else {
-        wrongQuestionsContainer.innerHTML = '';
+        wrongQuestionsContainer.innerHTML = '<p>恭喜！你答對了所有題目！</p>';
     }
+
+    // 自動儲存成績單
+    await saveResult(studentName);
 }
 
 // 儲存成績單
-async function saveResult() {
-    const studentName = studentNameInput.value.trim();
-    if (!studentName) {
-        alert('請輸入您的姓名');
-        return;
-    }
-
+async function saveResult(studentName) {
     // 建立成績單容器
     const resultContainer = document.createElement('div');
     resultContainer.className = 'result-container';
@@ -496,19 +505,10 @@ async function saveResult() {
         document.body.removeChild(resultContainer);
         document.body.removeChild(style);
 
-        // 顯示成功訊息
-        alert('成績單已成功儲存！');
-        
-        // 禁用所有按鈕和輸入框
-        document.getElementById('start-btn').disabled = true;
-        document.getElementById('next-btn').disabled = true;
-        document.getElementById('save-result').disabled = true;
-        studentNameInput.disabled = true;
-        fileInput.disabled = true;
-        uploadButton.disabled = true;
-        
         // 顯示完成訊息
-        alert('測驗已完成！請關閉此視窗。');
+        setTimeout(() => {
+            alert('測驗已完成！成績單已自動儲存。\n請關閉此視窗。');
+        }, 500);
     } catch (error) {
         console.error('儲存成績單失敗:', error);
         alert('儲存成績單時發生錯誤，請稍後再試。');
