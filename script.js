@@ -67,7 +67,6 @@ const saveResultButton = document.getElementById('save-result');
 // 事件監聽器
 document.getElementById('start-btn').addEventListener('click', startQuiz);
 document.getElementById('next-btn').addEventListener('click', nextQuestion);
-document.getElementById('restart-btn').addEventListener('click', restartQuiz);
 uploadButton.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', handleFileUpload);
 saveResultButton.addEventListener('click', saveResult);
@@ -445,18 +444,19 @@ async function saveResult() {
 
         // 顯示成功訊息
         alert('成績單已成功儲存！');
+        
+        // 禁用所有按鈕和輸入框
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('save-result').disabled = true;
+        studentNameInput.disabled = true;
+        fileInput.disabled = true;
+        uploadButton.disabled = true;
+        
+        // 顯示完成訊息
+        alert('測驗已完成！請關閉此視窗。');
     } catch (error) {
         console.error('儲存成績單失敗:', error);
         alert('儲存成績單時發生錯誤，請稍後再試。');
     }
-}
-
-// 重新開始測驗
-function restartQuiz() {
-    resultScreen.classList.remove('active');
-    startScreen.classList.add('active');
-    uploadButton.innerHTML = '<i class="fas fa-file-upload"></i> 匯入題目';
-    uploadButton.classList.remove('success');
-    currentQuiz.questions = [];
-    studentNameInput.value = '';
 } 
