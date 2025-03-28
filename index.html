@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專題貢獻測驗系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 加入 html2canvas 函式庫 -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 開始頁面 -->
+        <div id="start-screen" class="screen active">
+            <h1>專題貢獻測驗系統</h1>
+            <div class="file-upload">
+                <input type="file" id="file-input" accept=".json,.csv" style="display: none;">
+                <div class="upload-buttons">
+                    <button id="upload-btn" class="btn secondary">
+                        <i class="fas fa-file-upload"></i> 匯入題目
+                    </button>
+                    <a href="questions_template.csv" download class="btn secondary">
+                        <i class="fas fa-download"></i> 下載模板
+                    </a>
+                </div>
+                <p class="file-format">支援格式：JSON、CSV</p>
+                <p class="file-instructions">
+                    CSV 格式說明：<br>
+                    1. 第一列必須包含標題：id,question,option1,option2,option3,option4,correct<br>
+                    2. id：題目編號（數字）<br>
+                    3. question：題目內容<br>
+                    4. option1-4：四個選項內容<br>
+                    5. correct：正確答案（0-3，對應四個選項）
+                </p>
+            </div>
+            <p>準備好開始測驗了嗎？</p>
+            <button id="start-btn" class="btn primary">
+                <i class="fas fa-play"></i> 開始測驗
+            </button>
+        </div>
+
+        <!-- 測驗頁面 -->
+        <div id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+            <div class="question-container">
+                <h2 id="question-text"></h2>
+            </div>
+            <div class="options-container" id="options-container">
+                <!-- 選項將透過 JavaScript 動態產生 -->
+            </div>
+            <div class="navigation">
+                <button id="next-btn" class="btn secondary" disabled>
+                    <i class="fas fa-arrow-right"></i> 下一題
+                </button>
+            </div>
+        </div>
+
+        <!-- 結果頁面 -->
+        <div id="result-screen" class="screen">
+            <h2>測驗完成！</h2>
+            <div class="score-container">
+                <div class="score-box">
+                    <h3>得分</h3>
+                    <div class="score" id="final-score">0</div>
+                    <div class="score-label">/ 100</div>
+                </div>
+                <div class="score-box">
+                    <h3>貢獻度</h3>
+                    <div class="score" id="contribution-score">0</div>
+                    <div class="score-label">%</div>
+                </div>
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <div class="wrong-questions" id="wrong-questions"></div>
+            <div class="result-actions">
+                <div class="name-input">
+                    <input type="text" id="student-name" placeholder="請輸入您的姓名" maxlength="20">
+                </div>
+                <div class="action-buttons">
+                    <button id="save-result" class="btn primary">
+                        <i class="fas fa-save"></i> 儲存成績單
+                    </button>
+                    <button id="restart-btn" class="btn secondary">
+                        <i class="fas fa-redo"></i> 重新開始
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="footer">
+        <p>製作人：Ying-Fan Lin</p>
+        <p>© 2024 專題貢獻測驗系統</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html> 
