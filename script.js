@@ -82,10 +82,16 @@ async function handleFileUpload(event) {
             currentQuiz.questions = questions;
             uploadButton.innerHTML = '<i class="fas fa-check"></i> 題目已匯入';
             uploadButton.classList.add('success');
+            console.log('成功匯入題目：', questions);
+            alert('題目已成功匯入！');
+        } else {
+            throw new Error('沒有有效的題目');
         }
     } catch (error) {
         console.error('檔案處理失敗:', error);
-        alert('檔案格式錯誤，請確認檔案格式是否正確。');
+        alert('檔案格式錯誤，請確認檔案格式是否正確。\n錯誤訊息：' + error.message);
+        uploadButton.innerHTML = '<i class="fas fa-file-upload"></i> 匯入題目';
+        uploadButton.classList.remove('success');
     }
 }
 
@@ -102,56 +108,101 @@ async function loadQuestionsFromFile(file) {
                 } else if (file.name.endsWith('.csv')) {
                     questions = parseCSV(event.target.result);
                 } else {
-                    reject(new Error('不支援的檔案格式'));
+                    reject(new Error('不支援的檔案格式，請使用 .json 或 .csv 檔案'));
                     return;
                 }
 
                 // 驗證題目格式
-                if (!Array.isArray(questions) || !questions.every(validateQuestion)) {
-                    reject(new Error('題目格式不正確'));
+                if (!Array.isArray(questions)) {
+                    reject(new Error('題目格式不正確：不是有效的陣列'));
                     return;
                 }
 
-                resolve(questions);
+                const validQuestions = questions.filter(q => {
+                    try {
+                        return validateQuestion(q);
+                    } catch (e) {
+                        console.warn('題目驗證失敗:', q, e);
+                        return false;
+                    }
+                });
+
+                if (validQuestions.length === 0) {
+                    reject(new Error('沒有有效的題目'));
+                    return;
+                }
+
+                resolve(validQuestions);
             } catch (error) {
-                reject(error);
+                reject(new Error('檔案解析失敗：' + error.message));
             }
         };
 
         reader.onerror = () => reject(new Error('檔案讀取失敗'));
-        reader.readAsText(file);
+        reader.readAsText(file, 'UTF-8');
     });
 }
 
 // 解析 CSV 檔案
 function parseCSV(csv) {
-    const lines = csv.split('\n');
+    const lines = csv.split(/\r\n|\n|\r/).filter(line => line.trim());
+    
+    if (lines.length < 2) {
+        throw new Error('CSV 檔案必須包含標題列和至少一個題目');
+    }
+
     const headers = lines[0].split(',').map(h => h.trim());
     
-    return lines.slice(1)
-        .filter(line => line.trim()) // 過濾空行
-        .map(line => {
-            const values = line.split(',').map(v => v.trim());
-            return {
-                id: parseInt(values[0]),
-                question: values[1],
-                options: values.slice(2, 6),
-                correct: parseInt(values[6])
-            };
-        });
+    const requiredHeaders = ['id', 'question', 'option1', 'option2', 'option3', 'option4', 'correct'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    if (missingHeaders.length > 0) {
+        throw new Error('CSV 檔案缺少必要欄位：' + missingHeaders.join(', '));
+    }
+
+    return lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim());
+        if (values.length !== headers.length) {
+            throw new Error('CSV 行資料格式不正確：' + line);
+        }
+
+        const question = {
+            id: parseInt(values[0]),
+            question: values[1],
+            options: [
+                values[2],
+                values[3],
+                values[4],
+                values[5]
+            ],
+            correct: parseInt(values[6])
+        };
+
+        if (isNaN(question.id) || isNaN(question.correct)) {
+            throw new Error('題號或正確答案必須是數字');
+        }
+
+        return question;
+    });
 }
 
 // 驗證題目格式
 function validateQuestion(q) {
-    return (
-        q.id &&
-        q.question &&
-        Array.isArray(q.options) &&
-        q.options.length === 4 &&
-        typeof q.correct === 'number' &&
-        q.correct >= 0 &&
-        q.correct < 4
-    );
+    if (!q.id || typeof q.id !== 'number' || isNaN(q.id)) {
+        throw new Error('題號必須是有效的數字');
+    }
+    if (!q.question || typeof q.question !== 'string' || q.question.trim() === '') {
+        throw new Error('題目內容不能為空');
+    }
+    if (!Array.isArray(q.options) || q.options.length !== 4) {
+        throw new Error('選項必須是包含 4 個項目的陣列');
+    }
+    if (q.options.some(opt => !opt || typeof opt !== 'string' || opt.trim() === '')) {
+        throw new Error('選項不能為空');
+    }
+    if (typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3 || isNaN(q.correct)) {
+        throw new Error('正確答案必須是 0-3 之間的數字');
+    }
+    return true;
 }
 
 // 隨機選擇題目
@@ -253,9 +304,9 @@ function nextQuestion() {
     // 移動到下一題或顯示結果
     currentQuiz.currentQuestionIndex++;
     if (currentQuiz.currentQuestionIndex < CONFIG.questionsPerQuiz) {
-        setTimeout(showQuestion, 1000);
+        setTimeout(showQuestion, 300);
     } else {
-        setTimeout(showResults, 1000);
+        setTimeout(showResults, 300);
     }
 }
 

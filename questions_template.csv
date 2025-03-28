@@ -1,6 +1,6 @@
 id,question,option1,option2,option3,option4,correct
-1,JavaScript 中，以下哪個不是基本資料型別？,String,Number,Object,Boolean,2
-2,CSS 中，以下哪個屬性用於設定元素透明度？,opacity,transparency,alpha,visibility,0
-3,HTML5 中，哪個標籤用於播放影片？,<video>,<media>,<movie>,<play>,0
-4,以下哪個不是 HTTP 請求方法？,GET,POST,SEND,PUT,2
-5,在 JavaScript 中，哪個方法用於將字串轉換為整數？,parseInt(),toInteger(),convertToInt(),number(),0 
+1,JavaScript String 的型別是什麼?,Number,Object,Boolean,String,2
+2,CSS3 中設定透明度的屬性是?,opacity,transparent,alpha,visibility,0
+3,HTML5 中影片標籤是?,<media>,<movie>,<video>,<play>,2
+4,常見的 HTTP 請求方法有哪些?,GET,POST,SEND,PUT,2
+5,JavaScript 中將字串轉換為數字的方法?,parseInt(),toInteger(),convertToNumber(),parseNumber(),0 
