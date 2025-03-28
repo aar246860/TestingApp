@@ -260,6 +260,14 @@ function showQuestion() {
 
     // 重置下一題按鈕狀態
     nextButton.disabled = true;
+    
+    // 更新下一題按鈕文字
+    const remainingQuestions = CONFIG.questionsPerQuiz - currentQuiz.currentQuestionIndex - 1;
+    if (remainingQuestions > 0) {
+        nextButton.textContent = `下一題 (還剩 ${remainingQuestions} 題)`;
+    } else {
+        nextButton.textContent = '完成測驗';
+    }
 }
 
 // 選擇答案
@@ -295,11 +303,6 @@ function nextQuestion() {
     // 停用所有選項
     const options = document.querySelectorAll('.option');
     options.forEach(option => option.disabled = true);
-
-    // 更新下一題按鈕文字
-    if (currentQuiz.currentQuestionIndex === CONFIG.questionsPerQuiz - 1) {
-        nextButton.textContent = '完成測驗';
-    }
 
     // 移動到下一題或顯示結果
     currentQuiz.currentQuestionIndex++;
