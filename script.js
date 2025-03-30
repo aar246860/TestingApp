@@ -1,14 +1,7 @@
 // 測驗系統設定
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
-    timePerQuestion: 30,   // 每題時間限制（秒）
 };
-
-// 音效設定
-const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-const endSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-startSound.volume = 0.5;
-endSound.volume = 0.5;
 
 // 防止重新整理和重複作答
 window.onbeforeunload = function() {
@@ -110,6 +103,9 @@ function selectOption(selectedIndex) {
     const question = currentQuestions[currentQuestionIndex];
     const buttons = optionsContainer.querySelectorAll('.option-btn');
     
+    // 記錄選擇的答案
+    question.selectedAnswer = selectedIndex;
+    
     // 停用所有按鈕
     buttons.forEach(button => {
         button.disabled = true;
@@ -148,11 +144,41 @@ function showResult() {
     finalScore.textContent = finalScoreValue;
     contributionScore.textContent = finalScoreValue;
 
-    // 播放結束音效
-    endSound.play().catch(e => console.log('無法播放結束音效:', e));
+    // 顯示回饋
+    let feedbackText = '';
+    if (finalScoreValue >= 90) {
+        feedbackText = '太棒了！你的表現非常出色！請繼續保持！';
+    } else if (finalScoreValue >= 70) {
+        feedbackText = '做得不錯！還有進步空間，請繼續加油！';
+    } else if (finalScoreValue >= 50) {
+        feedbackText = '及格了！建議多複習一下，下次會更好！';
+    } else {
+        feedbackText = '需要多加努力！建議重新學習相關知識點。';
+    }
+    feedback.textContent = feedbackText;
 
-    // 標記測驗完成
-    markQuizCompleted(currentQuiz);
+    // 顯示所有題目的答案詳情
+    const answersHTML = currentQuestions.map((q, index) => {
+        const isCorrect = q.correct === q.selectedAnswer;
+        return `
+            <div class="answer-item ${isCorrect ? 'correct' : 'wrong'}">
+                <h4>第 ${index + 1} 題</h4>
+                <p class="question">${q.question}</p>
+                <div class="options">
+                    ${q.options.map((opt, i) => `
+                        <div class="option ${i === q.correct ? 'correct' : i === q.selectedAnswer ? 'wrong' : ''}">
+                            ${opt}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    wrongQuestions.innerHTML = `
+        <h3>答案詳情：</h3>
+        ${answersHTML}
+    `;
 
     // 自動截圖
     setTimeout(() => {
@@ -638,27 +664,215 @@ async function saveResult(studentName) {
     }
 }
 
+// 添加題庫數據
+const questionBanks = {
+    island: [
+        {
+            id: 101,
+            question: "在海島環境中，您如何確保研究數據的準確性？",
+            options: [
+                "不重視數據準確性",
+                "偶爾檢查數據",
+                "定期校準儀器",
+                "建立完整的數據品質控制系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 102,
+            question: "您是否按時完成海島環境監測報告？",
+            options: [
+                "從不按時",
+                "偶爾按時",
+                "經常按時",
+                "總是按時"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 103,
+            question: "在海島研究中，您如何處理突發狀況？",
+            options: [
+                "完全無法處理",
+                "被動應對",
+                "主動預防",
+                "建立完整的應變機制"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 104,
+            question: "您對海島生態系統的保護意識如何？",
+            options: [
+                "不重視",
+                "一般重視",
+                "非常重視",
+                "積極推動保護措施"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 105,
+            question: "在海島研究中，您如何確保團隊安全？",
+            options: [
+                "不重視安全",
+                "基本安全措施",
+                "完整安全計畫",
+                "建立緊急應變機制"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 106,
+            question: "您對海島環境監測的參與度如何？",
+            options: [
+                "從不參與",
+                "被動參與",
+                "積極參與",
+                "主導監測計畫"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 107,
+            question: "在海島研究中，您如何處理數據分析？",
+            options: [
+                "不進行分析",
+                "簡單分析",
+                "深入分析",
+                "建立完整的分析系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 108,
+            question: "您對海島研究的創新貢獻如何？",
+            options: [
+                "沒有創新",
+                "一般創新",
+                "積極創新",
+                "引領研究方向"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 109,
+            question: "在海島研究中，您如何確保研究品質？",
+            options: [
+                "不重視品質",
+                "基本品質要求",
+                "嚴格品質控制",
+                "建立完整的品質管理系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 110,
+            question: "您對海島研究的團隊合作如何？",
+            options: [
+                "不願合作",
+                "被動合作",
+                "積極合作",
+                "主動協調團隊"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 111,
+            question: "在海島研究中，您如何處理研究經費？",
+            options: [
+                "不重視經費",
+                "基本經費管理",
+                "嚴格經費控制",
+                "建立完整的經費管理系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 112,
+            question: "您對海島研究的時間管理如何？",
+            options: [
+                "不重視時間",
+                "基本時間管理",
+                "嚴格時間控制",
+                "建立完整的時間管理系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 113,
+            question: "在海島研究中，您如何確保研究倫理？",
+            options: [
+                "不重視倫理",
+                "基本倫理要求",
+                "嚴格倫理控制",
+                "建立完整的倫理管理系統"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 114,
+            question: "您對海島研究的知識分享如何？",
+            options: [
+                "不願分享",
+                "被動分享",
+                "積極分享",
+                "主動建立分享平台"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 115,
+            question: "在海島研究中，您如何處理研究衝突？",
+            options: [
+                "無法處理",
+                "被動處理",
+                "積極處理",
+                "建立完整的衝突處理機制"
+            ],
+            correct: 3,
+            weight: 1
+        },
+        {
+            id: 116,
+            question: "在海島環境中，何種方式可提升地下水永續性？",
+            options: [
+                "每日定量抽水",
+                "集中高效抽水",
+                "人工補注",
+                "雨水回收與地下補注"
+            ],
+            correct: 3,
+            weight: 1
+        }
+    ]
+};
+
 // 修改 loadQuestions 函數
 async function loadQuestions(quizType) {
     try {
-        // 根據測驗類型選擇對應的CSV文件
-        const csvFile = `./questions/${quizType}_questions.csv`;
-        console.log('正在載入題庫文件:', csvFile); // 添加日誌
-        
-        const response = await fetch(csvFile);
-        if (!response.ok) {
-            throw new Error(`找不到題庫文件：${csvFile}`);
+        // 使用內嵌的題庫數據
+        const questions = questionBanks[quizType];
+        if (!questions) {
+            throw new Error(`找不到題庫：${quizType}`);
         }
         
-        const csvText = await response.text();
-        console.log('成功讀取CSV文件'); // 添加日誌
-        
-        const questions = parseCSV(csvText);
-        console.log('成功解析題目數量:', questions.length); // 添加日誌
-        
-        if (questions.length === 0) {
-            throw new Error('題庫為空');
-        }
+        console.log('成功讀取題庫數據'); // 添加日誌
+        console.log('題目總數:', questions.length); // 添加日誌
         
         // 隨機選擇10題
         const selectedQuestions = [];
@@ -684,7 +898,7 @@ async function loadQuestions(quizType) {
 // 修改 startQuiz 函數
 async function startQuiz(quizType) {
     try {
-        console.log('開始載入測驗:', quizType); // 添加日誌
+        console.log('開始載入測驗:', quizType);
         
         const questions = await loadQuestions(quizType);
         if (questions.length === 0) {
@@ -695,17 +909,82 @@ async function startQuiz(quizType) {
         currentQuestions = questions;
         currentQuestionIndex = 0;
         score = 0;
-        startTime = Date.now();
-        timeLeft = 30;
-
-        // 播放開始音效
-        startSound.play().catch(error => console.log('無法播放音效:', error));
 
         showScreen('quiz');
         updateQuestion();
-        startTimer();
     } catch (error) {
         console.error('開始測驗失敗:', error);
         alert('開始測驗失敗：' + error.message);
     }
+}
+
+// 添加 showScreen 函數
+function showScreen(screenName) {
+    // 隱藏所有畫面
+    startScreen.classList.remove('active');
+    quizScreen.classList.remove('active');
+    resultScreen.classList.remove('active');
+
+    // 顯示指定的畫面
+    switch (screenName) {
+        case 'start':
+            startScreen.classList.add('active');
+            break;
+        case 'quiz':
+            quizScreen.classList.add('active');
+            break;
+        case 'result':
+            resultScreen.classList.add('active');
+            break;
+    }
+}
+
+// 修改 updateQuestion 函數
+function updateQuestion() {
+    if (currentQuestionIndex >= currentQuestions.length) {
+        showResult();
+        return;
+    }
+
+    const question = currentQuestions[currentQuestionIndex];
+    questionText.textContent = question.question;
+    optionsContainer.innerHTML = '';
+    
+    // 添加剩餘題數顯示
+    const remainingQuestions = currentQuestions.length - currentQuestionIndex;
+    const progressText = document.createElement('div');
+    progressText.className = 'progress-text';
+    progressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
+    document.querySelector('.question-container').appendChild(progressText);
+    
+    question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-btn';
+        button.textContent = option;
+        button.addEventListener('click', () => selectOption(index));
+        optionsContainer.appendChild(button);
+    });
+
+    nextBtn.disabled = true;
+    updateProgressBar();
+}
+
+// 修改 startTimer 函數
+function startTimer() {
+    const timerDisplay = document.createElement('div');
+    timerDisplay.className = 'timer';
+    timerDisplay.textContent = timeLeft;
+    document.querySelector('.question-container').appendChild(timerDisplay);
+
+    const timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timerDisplay.remove();
+            nextBtn.disabled = false;
+            selectOption(-1); // 超時自動選擇
+        }
+    }, 1000);
 } 
