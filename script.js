@@ -672,39 +672,42 @@ uploadBtn.addEventListener('click', async () => {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: #1a1a1a;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             z-index: 1000;
             min-width: 300px;
             text-align: center;
+            color: white;
         `;
         
         dialogDiv.innerHTML = `
-            <h3 style="margin-top: 0;">請選擇題庫</h3>
+            <h3 style="margin-top: 0; color: white;">請選擇題庫</h3>
             <div id="quiz-buttons" style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">
                 ${data.quizzes.map(quiz => `
                     <button class="quiz-select-btn" style="
-                        padding: 10px;
+                        padding: 15px;
                         border: none;
                         background: #6c5ce7;
                         color: white;
-                        border-radius: 5px;
+                        border-radius: 8px;
                         cursor: pointer;
                         font-size: 16px;
-                        transition: background 0.3s;
+                        transition: all 0.3s;
+                        border: 2px solid transparent;
                     ">${quiz.name}</button>
                 `).join('')}
             </div>
             <button id="cancel-select" style="
-                padding: 8px 20px;
+                padding: 10px 25px;
                 border: none;
                 background: #a8a8a8;
                 color: white;
-                border-radius: 5px;
+                border-radius: 8px;
                 cursor: pointer;
                 margin-top: 10px;
+                transition: all 0.3s;
             ">取消</button>
         `;
 
@@ -716,8 +719,9 @@ uploadBtn.addEventListener('click', async () => {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             z-index: 999;
+            backdrop-filter: blur(3px);
         `;
 
         document.body.appendChild(overlay);
@@ -728,9 +732,13 @@ uploadBtn.addEventListener('click', async () => {
         buttons.forEach(button => {
             button.addEventListener('mouseover', () => {
                 button.style.background = '#5048b5';
+                button.style.borderColor = '#8677f0';
+                button.style.transform = 'translateY(-2px)';
             });
             button.addEventListener('mouseout', () => {
                 button.style.background = '#6c5ce7';
+                button.style.borderColor = 'transparent';
+                button.style.transform = 'translateY(0)';
             });
             button.addEventListener('click', async () => {
                 const selectedQuiz = data.quizzes.find(q => q.name === button.textContent);
@@ -778,6 +786,12 @@ uploadBtn.addEventListener('click', async () => {
 
         // 取消按鈕事件
         const cancelBtn = dialogDiv.querySelector('#cancel-select');
+        cancelBtn.addEventListener('mouseover', () => {
+            cancelBtn.style.background = '#8a8a8a';
+        });
+        cancelBtn.addEventListener('mouseout', () => {
+            cancelBtn.style.background = '#a8a8a8';
+        });
         cancelBtn.addEventListener('click', () => {
             document.body.removeChild(overlay);
             document.body.removeChild(dialogDiv);
