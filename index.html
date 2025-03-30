@@ -9,20 +9,23 @@
 </head>
 <body>
     <div class="container">
+        <!-- 開始畫面 -->
         <div id="start-screen" class="screen active">
             <h1>測驗系統</h1>
-            <div class="quiz-type">
-                <h3>請選擇題庫</h3>
-                <div id="quiz-list" class="quiz-list">
-                    <!-- 題庫列表將由 JavaScript 動態生成 -->
-                </div>
-            </div>
             <div class="input-group">
                 <input type="text" id="student-name" placeholder="請輸入姓名" required>
+                <div class="file-upload">
+                    <input type="file" id="questionFile" accept=".json" style="display: none;">
+                    <button id="uploadBtn" class="btn">
+                        <i class="fas fa-file-upload"></i> 匯入題庫
+                    </button>
+                </div>
+                <div id="quizInfo" style="display: none;"></div>
+                <button id="start-btn" class="btn" disabled>開始測驗</button>
             </div>
-            <button id="start-btn" class="btn" disabled>開始測驗</button>
         </div>
 
+        <!-- 測驗畫面 -->
         <div id="quiz-screen" class="screen">
             <div class="question-container">
                 <div class="progress-bar">
@@ -34,8 +37,8 @@
             </div>
         </div>
 
+        <!-- 結果畫面 -->
         <div id="result-screen" class="screen">
-            <h2>測驗結果</h2>
             <div class="result-content">
                 <div class="score-box">
                     <h3>得分</h3>
@@ -50,7 +53,6 @@
                 <div id="feedback" class="feedback"></div>
                 <div id="wrong-questions" class="wrong-questions"></div>
             </div>
-            <button id="save-result" class="btn">儲存成績單</button>
         </div>
     </div>
     <script src="script.js"></script>

@@ -1,7 +1,7 @@
 // 測驗系統設定
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
-    questionsPath: './questions/',  // 題庫文件路徑
+    questionsPath: '/quiz-app/questions/',  // 修改為 GitHub Pages 路徑
     isLocalDevelopment: window.location.protocol === 'file:'  // 檢查是否為本地開發環境
 };
 
@@ -30,8 +30,8 @@ let currentQuestionIndex = 0;
 let score = 0;
 let studentName = '';
 let quizInfo = null;
-let startTime = 0;
-let timeLeft = 0;
+let startTime = null;
+let endTime = null;
 
 // 添加文件上傳相關變量
 let uploadedQuestions = null;
@@ -49,10 +49,10 @@ const finalScore = document.getElementById('final-score');
 const contributionScore = document.getElementById('contribution-score');
 const feedback = document.getElementById('feedback');
 const wrongQuestions = document.getElementById('wrong-questions');
-const fileInput = document.getElementById('file-input');
-const uploadButton = document.getElementById('upload-btn');
+const fileInput = document.getElementById('questionFile');
+const uploadBtn = document.getElementById('uploadBtn');
 const saveResultButton = document.getElementById('save-result');
-const quizList = document.getElementById('quiz-list');
+const quizInfoDiv = document.getElementById('quizInfo');
 
 // 題庫列表
 let availableQuizzes = [];
@@ -61,6 +61,8 @@ let availableQuizzes = [];
 async function loadAvailableQuizzes() {
     try {
         console.log('正在載入題庫列表...');
+        console.log('當前路徑:', CONFIG.questionsPath);
+        console.log('是否本地開發:', CONFIG.isLocalDevelopment);
         
         // 如果是本地開發環境，使用內嵌的題庫列表
         if (CONFIG.isLocalDevelopment) {
@@ -95,10 +97,14 @@ async function loadAvailableQuizzes() {
         }
         
         // 如果是通過 HTTP/HTTPS 訪問，嘗試從服務器載入題庫列表
-        const response = await fetch(CONFIG.questionsPath + 'quiz_list.json');
+        const quizListUrl = CONFIG.questionsPath + 'quiz_list.json';
+        console.log('嘗試載入題庫列表:', quizListUrl);
+        
+        const response = await fetch(quizListUrl);
         if (!response.ok) {
-            throw new Error('無法載入題庫列表');
+            throw new Error(`無法載入題庫列表: ${response.status} ${response.statusText}`);
         }
+        
         const data = await response.json();
         console.log('成功載入題庫列表:', data);
         
@@ -113,7 +119,7 @@ async function loadAvailableQuizzes() {
         displayQuizList();
     } catch (error) {
         console.error('載入題庫列表失敗:', error);
-        alert('載入題庫列表失敗：' + error.message);
+        alert('載入題庫列表失敗：' + error.message + '\n請檢查瀏覽器控制台以獲取更多信息。');
     }
 }
 
@@ -154,10 +160,9 @@ async function selectQuiz(quiz) {
         // 如果是本地開發環境，使用內嵌的題目數據
         if (CONFIG.isLocalDevelopment) {
             console.log('檢測到本地開發環境，使用內嵌題目數據');
-            // 這裡可以添加內嵌的題目數據
             const response = await fetch(CONFIG.questionsPath + quiz.file);
             if (!response.ok) {
-                throw new Error('無法載入題庫文件');
+                throw new Error(`無法載入題庫文件: ${response.status} ${response.statusText}`);
             }
             const data = await response.json();
             console.log('成功載入題庫:', data);
@@ -174,9 +179,12 @@ async function selectQuiz(quiz) {
         }
         
         // 如果是通過 HTTP/HTTPS 訪問，從服務器載入題庫
-        const response = await fetch(CONFIG.questionsPath + quiz.file);
+        const quizUrl = CONFIG.questionsPath + quiz.file;
+        console.log('嘗試載入題庫文件:', quizUrl);
+        
+        const response = await fetch(quizUrl);
         if (!response.ok) {
-            throw new Error('無法載入題庫文件');
+            throw new Error(`無法載入題庫文件: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         console.log('成功載入題庫:', data);
@@ -191,7 +199,7 @@ async function selectQuiz(quiz) {
         console.log('題庫選擇完成');
     } catch (error) {
         console.error('載入題庫失敗:', error);
-        alert('載入題庫失敗：' + error.message);
+        alert('載入題庫失敗：' + error.message + '\n請檢查瀏覽器控制台以獲取更多信息。');
     }
 }
 
@@ -311,6 +319,11 @@ function updateQuestion() {
 
 // 顯示結果
 function showResult() {
+    endTime = new Date(); // 記錄結束時間
+    const duration = Math.floor((endTime - startTime) / 1000); // 計算測驗時間（秒）
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+
     quizScreen.classList.remove('active');
     resultScreen.classList.add('active');
 
@@ -349,6 +362,21 @@ function showResult() {
         `;
     }).join('');
 
+    // 添加測驗信息到結果頁面
+    const resultInfo = document.createElement('div');
+    resultInfo.className = 'result-info';
+    resultInfo.innerHTML = `
+        <h2>測驗結果</h2>
+        <div class="test-info">
+            <p>姓名：${studentName}</p>
+            <p>題庫：${quizInfo.name}</p>
+            <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
+            <p>完成時間：${endTime.toLocaleTimeString('zh-TW')}</p>
+            <p>測驗時長：${minutes}分${seconds}秒</p>
+        </div>
+    `;
+    resultScreen.insertBefore(resultInfo, resultScreen.firstChild);
+
     wrongQuestions.innerHTML = `
         <h3>答案詳情：</h3>
         ${answersHTML}
@@ -370,8 +398,8 @@ async function captureResult() {
             <div class="result-header">
                 <h2>測驗成績單</h2>
                 <p>姓名：${studentName}</p>
-                <p>題庫：${currentQuiz}</p>
-                <p>日期：${new Date().toLocaleDateString('zh-TW')}</p>
+                <p>題庫：${quizInfo.name}</p>
+                <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
             </div>
             <div class="result-content">
                 <div class="score-summary">
@@ -477,7 +505,7 @@ async function captureResult() {
 
         // 下載圖片
         const link = document.createElement('a');
-        link.download = `${studentName}_${currentQuiz}_測驗結果.png`;
+        link.download = `${studentName}_${quizInfo.name}_測驗結果.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
 
@@ -490,348 +518,6 @@ async function captureResult() {
     } catch (error) {
         console.error('截圖失敗:', error);
         alert('成績單生成失敗，請手動截圖。');
-    }
-}
-
-// 姓名輸入和題目上傳的驗證
-function validateStartConditions() {
-    const nameInput = document.getElementById('student-name');
-    const startButton = document.getElementById('start-btn');
-    const name = nameInput.value.trim();
-    const hasQuestions = currentQuestions.length > 0;
-    
-    startButton.disabled = !name || !hasQuestions;
-}
-
-// 處理檔案上傳
-async function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-        const questions = await loadQuestionsFromFile(file);
-        if (questions && questions.length > 0) {
-            currentQuiz.questions = questions;
-            uploadButton.innerHTML = '<i class="fas fa-check"></i> 題目已匯入';
-            uploadButton.classList.add('success');
-            console.log('成功匯入題目：', questions);
-            alert('題目已成功匯入！');
-        } else {
-            throw new Error('沒有有效的題目');
-        }
-    } catch (error) {
-        console.error('檔案處理失敗:', error);
-        alert('檔案格式錯誤，請確認檔案格式是否正確。\n錯誤訊息：' + error.message);
-        uploadButton.innerHTML = '<i class="fas fa-file-upload"></i> 匯入題目';
-        uploadButton.classList.remove('success');
-    }
-    validateStartConditions();
-}
-
-// 從檔案載入題目的函式
-async function loadQuestionsFromFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-            try {
-                let questions;
-                if (file.name.endsWith('.json')) {
-                    questions = JSON.parse(event.target.result);
-                } else if (file.name.endsWith('.csv')) {
-                    questions = parseCSV(event.target.result);
-                } else {
-                    reject(new Error('不支援的檔案格式，請使用 .json 或 .csv 檔案'));
-                    return;
-                }
-
-                // 驗證題目格式
-                if (!Array.isArray(questions)) {
-                    reject(new Error('題目格式不正確：不是有效的陣列'));
-                    return;
-                }
-
-                const validQuestions = questions.filter(q => {
-                    try {
-                        return validateQuestion(q);
-                    } catch (e) {
-                        console.warn('題目驗證失敗:', q, e);
-                        return false;
-                    }
-                });
-
-                if (validQuestions.length === 0) {
-                    reject(new Error('沒有有效的題目'));
-                    return;
-                }
-
-                resolve(validQuestions);
-            } catch (error) {
-                reject(new Error('檔案解析失敗：' + error.message));
-            }
-        };
-
-        reader.onerror = () => reject(new Error('檔案讀取失敗'));
-        reader.readAsText(file, 'UTF-8');
-    });
-}
-
-// 解析 CSV 檔案
-function parseCSV(csv) {
-    const lines = csv.split(/\r\n|\n|\r/).filter(line => line.trim());
-    
-    if (lines.length < 2) {
-        throw new Error('CSV 檔案必須包含標題列和至少一個題目');
-    }
-
-    const headers = lines[0].split(',').map(h => h.trim());
-    
-    // 檢查必要欄位
-    const requiredHeaders = ['id', 'question', 'option1', 'option2', 'option3', 'option4', 'correct', 'weight'];
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    if (missingHeaders.length > 0) {
-        throw new Error('CSV 檔案缺少必要欄位：' + missingHeaders.join(', '));
-    }
-
-    return lines.slice(1).map(line => {
-        const values = line.split(',').map(v => v.trim());
-        if (values.length !== headers.length) {
-            throw new Error('CSV 行資料格式不正確：' + line);
-        }
-
-        const question = {
-            id: parseInt(values[0]),
-            question: values[1],
-            options: [
-                values[2],
-                values[3],
-                values[4],
-                values[5]
-            ],
-            correct: parseInt(values[6]),
-            weight: parseFloat(values[7]) || 1
-        };
-
-        if (isNaN(question.id) || isNaN(question.correct)) {
-            throw new Error('題號或正確答案必須是數字');
-        }
-
-        return question;
-    });
-}
-
-// 驗證題目格式
-function validateQuestion(q) {
-    if (!q.id || typeof q.id !== 'number' || isNaN(q.id)) {
-        throw new Error('題號必須是有效的數字');
-    }
-    if (!q.question || typeof q.question !== 'string' || q.question.trim() === '') {
-        throw new Error('題目內容不能為空');
-    }
-    if (!Array.isArray(q.options) || q.options.length !== 4) {
-        throw new Error('選項必須是包含 4 個項目的陣列');
-    }
-    if (q.options.some(opt => !opt || typeof opt !== 'string' || opt.trim() === '')) {
-        throw new Error('選項不能為空');
-    }
-    if (typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3 || isNaN(q.correct)) {
-        throw new Error('正確答案必須是 0-3 之間的數字');
-    }
-    return true;
-}
-
-// 隨機選擇題目
-function randomlySelectQuestions(questions, count) {
-    if (questions.length <= count) {
-        return questions;
-    }
-    const shuffled = [...questions].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-}
-
-// 顯示結果並自動儲存
-async function showResults() {
-    quizScreen.classList.remove('active');
-    resultScreen.classList.add('active');
-
-    const finalScoreValue = Math.round((score / currentQuestions.length) * 100);
-    finalScore.textContent = finalScoreValue;
-    
-    const contributionValue = finalScoreValue;
-    contributionScore.textContent = contributionValue;
-
-    // 顯示回饋
-    let feedbackText = '';
-    if (contributionValue >= 90) {
-        feedbackText = '太棒了！你的表現非常出色！請繼續保持！';
-    } else if (contributionValue >= 70) {
-        feedbackText = '做得不錯！還有進步空間，請繼續加油！';
-    } else if (contributionValue >= 50) {
-        feedbackText = '及格了！建議多複習一下，下次會更好！';
-    } else {
-        feedbackText = '需要多加努力！建議重新學習相關知識點。';
-    }
-    feedback.textContent = feedbackText;
-
-    // 顯示錯誤題目
-    if (score < currentQuestions.length) {
-        const wrongQuestionsHTML = currentQuestions.slice(score).map((q, index) => `
-            <div class="wrong-question-item">
-                <h4>第 ${index + 1} 題</h4>
-                <p>${q.question}</p>
-            </div>
-        `).join('');
-        wrongQuestions.innerHTML = `
-            <h3>需要複習的題目：</h3>
-            ${wrongQuestionsHTML}
-        `;
-    } else {
-        wrongQuestions.innerHTML = '<p>恭喜！你答對了所有題目！</p>';
-    }
-
-    // 自動儲存成績單
-    await saveResult(studentName);
-}
-
-// 儲存成績單
-async function saveResult(studentName) {
-    // 建立成績單容器
-    const resultContainer = document.createElement('div');
-    resultContainer.className = 'result-container';
-    resultContainer.innerHTML = `
-        <div class="result-header">
-            <h2>測驗成績單</h2>
-            <p>姓名：${studentName}</p>
-            <p>日期：${new Date().toLocaleDateString('zh-TW')}</p>
-        </div>
-        <div class="result-content">
-            <div class="score-summary">
-                <div class="score-box">
-                    <h3>得分</h3>
-                    <div class="score">${finalScore.textContent}</div>
-                    <div class="score-label">/ 100</div>
-                </div>
-                <div class="score-box">
-                    <h3>貢獻度</h3>
-                    <div class="score">${contributionScore.textContent}</div>
-                    <div class="score-label">%</div>
-                </div>
-            </div>
-            <div class="feedback">${feedback.textContent}</div>
-            ${wrongQuestions.innerHTML}
-        </div>
-    `;
-
-    // 設定成績單樣式
-    const style = document.createElement('style');
-    style.textContent = `
-        .result-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .result-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .result-header h2 {
-            color: #1e293b;
-            margin-bottom: 1rem;
-        }
-        .result-header p {
-            color: #64748b;
-            margin: 0.5rem 0;
-        }
-        .score-summary {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        .score-box {
-            background: #f8fafc;
-            padding: 1.5rem;
-            border-radius: 12px;
-            min-width: 150px;
-        }
-        .score {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #6366f1;
-            line-height: 1;
-        }
-        .score-label {
-            font-size: 1rem;
-            color: #64748b;
-        }
-        .feedback {
-            margin: 2rem 0;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 12px;
-            font-size: 1.1rem;
-        }
-        .wrong-questions {
-            margin: 2rem 0;
-            padding: 1.5rem;
-            background: #f8fafc;
-            border-radius: 12px;
-            text-align: left;
-        }
-        .wrong-question-item {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: white;
-            border-radius: 12px;
-            border-left: 4px solid #ef4444;
-        }
-        .wrong-question-item:last-child {
-            margin-bottom: 0;
-        }
-        .wrong-question-item h4 {
-            color: #ef4444;
-            margin-bottom: 0.5rem;
-        }
-        .wrong-question-item p {
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-    `;
-
-    // 將成績單和樣式加入頁面
-    document.body.appendChild(style);
-    document.body.appendChild(resultContainer);
-
-    try {
-        // 使用 html2canvas 將成績單轉換為圖片
-        const canvas = await html2canvas(resultContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false
-        });
-
-        // 建立下載連結
-        const link = document.createElement('a');
-        link.download = `${studentName}_測驗成績單_${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        // 清理臨時元素
-        document.body.removeChild(resultContainer);
-        document.body.removeChild(style);
-
-        // 顯示完成訊息
-        setTimeout(() => {
-            alert('測驗已完成！成績單已自動儲存。\n請關閉此視窗。');
-        }, 500);
-    } catch (error) {
-        console.error('儲存成績單失敗:', error);
-        alert('儲存成績單時發生錯誤，請稍後再試。');
     }
 }
 
@@ -882,11 +568,12 @@ async function loadQuestions(quizType) {
 function startQuiz() {
     try {
         if (!currentQuestions || currentQuestions.length === 0) {
-            throw new Error('請先選擇題庫');
+            throw new Error('請先匯入題庫');
         }
 
         currentQuestionIndex = 0;
         score = 0;
+        startTime = new Date(); // 記錄開始時間
 
         // 隱藏開始畫面，顯示測驗畫面
         startScreen.classList.remove('active');
@@ -942,11 +629,11 @@ function startTimer() {
 }
 
 // 修改文件上傳事件監聽器
-document.getElementById('uploadBtn').addEventListener('click', () => {
-    document.getElementById('questionFile').click();
+uploadBtn.addEventListener('click', () => {
+    fileInput.click();
 });
 
-document.getElementById('questionFile').addEventListener('change', (e) => {
+fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -956,16 +643,22 @@ document.getElementById('questionFile').addEventListener('change', (e) => {
             const data = JSON.parse(event.target.result);
             
             // 驗證 JSON 格式
-            if (!data.info || !data.questions) {
+            if (!data.questions || !Array.isArray(data.questions)) {
                 throw new Error('JSON 文件格式不正確');
             }
 
+            // 從文件名稱獲取題庫名稱（移除 .json 副檔名）
+            const quizName = file.name.replace('.json', '');
+            
             // 保存題庫信息
-            quizInfo = data.info;
+            quizInfo = {
+                name: quizName,
+                description: data.info?.description || '無描述',
+                version: data.info?.version || '1.0'
+            };
             currentQuestions = data.questions;
 
             // 顯示題庫信息
-            const quizInfoDiv = document.getElementById('quizInfo');
             quizInfoDiv.innerHTML = `
                 <div class="quiz-info-content">
                     <h4>題庫信息</h4>
@@ -981,7 +674,7 @@ document.getElementById('questionFile').addEventListener('change', (e) => {
         } catch (error) {
             console.error('解析 JSON 文件失敗:', error);
             alert('解析題庫失敗，請檢查文件格式。\n錯誤信息：' + error.message);
-            document.getElementById('quizInfo').style.display = 'none';
+            quizInfoDiv.style.display = 'none';
             currentQuestions = null;
             startBtn.disabled = true;
         }
@@ -989,7 +682,7 @@ document.getElementById('questionFile').addEventListener('change', (e) => {
     reader.readAsText(file);
 });
 
-// 添加 CSV 解析函數
+// 解析 CSV 檔案
 function parseCSV(csvData) {
     const lines = csvData.split('\n');
     const questions = [];
@@ -1013,7 +706,4 @@ function parseCSV(csvData) {
     }
     
     return questions;
-}
-
-// 頁面載入時載入題庫列表
-document.addEventListener('DOMContentLoaded', loadAvailableQuizzes); 
+} 
