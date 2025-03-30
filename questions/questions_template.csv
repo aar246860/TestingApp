@@ -1,6 +1,0 @@
-id,question,option1,option2,option3,option4,correct
-1,JavaScript String 的型別是什麼?,Number,Object,Boolean,String,2
-2,CSS3 中設定透明度的屬性是?,opacity,transparent,alpha,visibility,0
-3,HTML5 中影片標籤是?,<media>,<movie>,<video>,<play>,2
-4,常見的 HTTP 請求方法有哪些?,GET,POST,SEND,PUT,2
-5,JavaScript 中將字串轉換為數字的方法?,parseInt(),toInteger(),convertToNumber(),parseNumber(),0 
