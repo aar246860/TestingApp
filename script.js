@@ -652,7 +652,6 @@ function startTimer() {
 // 修改文件上傳事件監聽器
 uploadBtn.addEventListener('click', async () => {
     try {
-        // 不論是本地還是 GitHub Pages 環境，都從 questions 目錄加載題庫
         const quizListPath = CONFIG.questionsPath + 'quiz_list.json';
         console.log('嘗試載入題庫列表:', quizListPath);
         
@@ -665,47 +664,124 @@ uploadBtn.addEventListener('click', async () => {
         if (!data.quizzes || !Array.isArray(data.quizzes)) {
             throw new Error('題庫列表格式不正確');
         }
-        
-        // 顯示題庫選擇對話框
-        const quizOptions = data.quizzes.map(q => q.name).join('\n');
-        const quizName = prompt('請選擇要載入的題庫：\n' + quizOptions);
-            
-        if (!quizName) return;
-        
-        const selectedQuiz = data.quizzes.find(q => q.name === quizName);
-        if (!selectedQuiz) {
-            throw new Error('找不到指定的題庫');
-        }
-        
-        // 載入選擇的題庫
-        const quizResponse = await fetch(CONFIG.questionsPath + selectedQuiz.file);
-        if (!quizResponse.ok) {
-            throw new Error(`無法載入題庫文件: ${quizResponse.status} ${quizResponse.statusText}`);
-        }
-        
-        const quizData = await quizResponse.json();
-        
-        // 保存題庫信息
-        quizInfo = {
-            name: selectedQuiz.name,
-            description: quizData.info?.description || selectedQuiz.description,
-            version: quizData.info?.version || '1.0'
-        };
-        currentQuestions = quizData.questions;
 
-        // 顯示題庫信息
-        quizInfoDiv.innerHTML = `
-            <div class="quiz-info-content">
-                <h4>題庫信息</h4>
-                <p>名稱：${quizInfo.name}</p>
-                <p>描述：${quizInfo.description}</p>
-                <p>題目數量：${currentQuestions.length}</p>
-            </div>
+        // 創建選擇題庫的對話框
+        const dialogDiv = document.createElement('div');
+        dialogDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 300px;
+            text-align: center;
         `;
-        quizInfoDiv.style.display = 'block';
+        
+        dialogDiv.innerHTML = `
+            <h3 style="margin-top: 0;">請選擇題庫</h3>
+            <div id="quiz-buttons" style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">
+                ${data.quizzes.map(quiz => `
+                    <button class="quiz-select-btn" style="
+                        padding: 10px;
+                        border: none;
+                        background: #6c5ce7;
+                        color: white;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        transition: background 0.3s;
+                    ">${quiz.name}</button>
+                `).join('')}
+            </div>
+            <button id="cancel-select" style="
+                padding: 8px 20px;
+                border: none;
+                background: #a8a8a8;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 10px;
+            ">取消</button>
+        `;
 
-        // 啟用開始按鈕
-        startBtn.disabled = !studentNameInput.value.trim();
+        // 添加遮罩
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        `;
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialogDiv);
+
+        // 添加按鈕事件
+        const buttons = dialogDiv.querySelectorAll('.quiz-select-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseover', () => {
+                button.style.background = '#5048b5';
+            });
+            button.addEventListener('mouseout', () => {
+                button.style.background = '#6c5ce7';
+            });
+            button.addEventListener('click', async () => {
+                const selectedQuiz = data.quizzes.find(q => q.name === button.textContent);
+                if (selectedQuiz) {
+                    try {
+                        const quizResponse = await fetch(CONFIG.questionsPath + selectedQuiz.file);
+                        if (!quizResponse.ok) {
+                            throw new Error(`無法載入題庫文件: ${quizResponse.status} ${quizResponse.statusText}`);
+                        }
+                        
+                        const quizData = await quizResponse.json();
+                        
+                        // 保存題庫信息
+                        quizInfo = {
+                            name: selectedQuiz.name,
+                            description: quizData.info?.description || selectedQuiz.description,
+                            version: quizData.info?.version || '1.0'
+                        };
+                        currentQuestions = quizData.questions;
+
+                        // 顯示題庫信息
+                        quizInfoDiv.innerHTML = `
+                            <div class="quiz-info-content">
+                                <h4>題庫信息</h4>
+                                <p>名稱：${quizInfo.name}</p>
+                                <p>描述：${quizInfo.description}</p>
+                                <p>題目數量：${currentQuestions.length}</p>
+                            </div>
+                        `;
+                        quizInfoDiv.style.display = 'block';
+
+                        // 啟用開始按鈕
+                        startBtn.disabled = !studentNameInput.value.trim();
+                        
+                        // 關閉對話框
+                        document.body.removeChild(overlay);
+                        document.body.removeChild(dialogDiv);
+                    } catch (error) {
+                        console.error('載入題庫失敗:', error);
+                        alert('載入題庫失敗：' + error.message);
+                    }
+                }
+            });
+        });
+
+        // 取消按鈕事件
+        const cancelBtn = dialogDiv.querySelector('#cancel-select');
+        cancelBtn.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            document.body.removeChild(dialogDiv);
+        });
         
     } catch (error) {
         console.error('載入題庫失敗:', error);
