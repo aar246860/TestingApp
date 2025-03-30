@@ -1,0 +1,24 @@
+{
+    "quizzes": [
+        {
+            "name": "海島組測驗",
+            "file": "island_questions.json",
+            "description": "海島環境研究相關知識測驗"
+        },
+        {
+            "name": "定向組測驗",
+            "file": "dingxiang_questions.json",
+            "description": "定向研究相關知識測驗"
+        },
+        {
+            "name": "預想組測驗",
+            "file": "yuxiang_questions.json",
+            "description": "預想研究相關知識測驗"
+        },
+        {
+            "name": "熱力組測驗",
+            "file": "thermal_questions.json",
+            "description": "熱力研究相關知識測驗"
+        }
+    ]
+} 

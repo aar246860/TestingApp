@@ -1,6 +1,8 @@
 // 測驗系統設定
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
+    questionsPath: './questions/',  // 題庫文件路徑
+    isLocalDevelopment: window.location.protocol === 'file:'  // 檢查是否為本地開發環境
 };
 
 // 防止重新整理和重複作答
@@ -23,12 +25,16 @@ function markQuizCompleted(quizType) {
 
 // 修改變量定義
 let currentQuiz = null;
-let currentQuestions = []; // 新增：當前測驗的題目
+let currentQuestions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 let studentName = '';
+let quizInfo = null;
 let startTime = 0;
 let timeLeft = 0;
+
+// 添加文件上傳相關變量
+let uploadedQuestions = null;
 
 // DOM 元素
 const startScreen = document.getElementById('start-screen');
@@ -46,26 +52,162 @@ const wrongQuestions = document.getElementById('wrong-questions');
 const fileInput = document.getElementById('file-input');
 const uploadButton = document.getElementById('upload-btn');
 const saveResultButton = document.getElementById('save-result');
+const quizList = document.getElementById('quiz-list');
 
-// 事件監聽器
-document.querySelectorAll('.quiz-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        // 移除其他按鈕的選中狀態
-        document.querySelectorAll('.quiz-btn').forEach(b => b.classList.remove('selected'));
-        // 添加當前按鈕的選中狀態
-        btn.classList.add('selected');
-        currentQuiz = btn.dataset.quiz;
-        startBtn.disabled = false;
+// 題庫列表
+let availableQuizzes = [];
+
+// 載入可用題庫
+async function loadAvailableQuizzes() {
+    try {
+        console.log('正在載入題庫列表...');
+        
+        // 如果是本地開發環境，使用內嵌的題庫列表
+        if (CONFIG.isLocalDevelopment) {
+            console.log('檢測到本地開發環境，使用內嵌題庫列表');
+            const defaultQuizzes = [
+                {
+                    name: "海島組測驗",
+                    file: "island_questions.json",
+                    description: "與海島環境研究相關的測驗"
+                },
+                {
+                    name: "定向組測驗",
+                    file: "dingxiang_questions.json",
+                    description: "與定向研究相關的測驗"
+                },
+                {
+                    name: "預想組測驗",
+                    file: "yuxiang_questions.json",
+                    description: "與預想研究相關的測驗"
+                },
+                {
+                    name: "熱力組測驗",
+                    file: "thermal_questions.json",
+                    description: "與熱力研究相關的測驗"
+                }
+            ];
+            
+            availableQuizzes = defaultQuizzes;
+            console.log('使用內嵌題庫列表:', availableQuizzes);
+            displayQuizList();
+            return;
+        }
+        
+        // 如果是通過 HTTP/HTTPS 訪問，嘗試從服務器載入題庫列表
+        const response = await fetch(CONFIG.questionsPath + 'quiz_list.json');
+        if (!response.ok) {
+            throw new Error('無法載入題庫列表');
+        }
+        const data = await response.json();
+        console.log('成功載入題庫列表:', data);
+        
+        if (!data.quizzes || !Array.isArray(data.quizzes)) {
+            throw new Error('題庫列表格式不正確');
+        }
+        
+        availableQuizzes = data.quizzes;
+        console.log('可用題庫:', availableQuizzes);
+        
+        // 顯示題庫列表
+        displayQuizList();
+    } catch (error) {
+        console.error('載入題庫列表失敗:', error);
+        alert('載入題庫列表失敗：' + error.message);
+    }
+}
+
+// 顯示題庫列表
+function displayQuizList() {
+    console.log('開始顯示題庫列表...');
+    quizList.innerHTML = '';
+    
+    if (!availableQuizzes || availableQuizzes.length === 0) {
+        quizList.innerHTML = '<p>目前沒有可用的題庫</p>';
+        return;
+    }
+    
+    availableQuizzes.forEach(quiz => {
+        const quizButton = document.createElement('button');
+        quizButton.className = 'quiz-option';
+        quizButton.textContent = quiz.name;
+        quizButton.addEventListener('click', () => selectQuiz(quiz));
+        quizList.appendChild(quizButton);
     });
+    
+    console.log('題庫列表顯示完成');
+}
+
+// 選擇題庫
+async function selectQuiz(quiz) {
+    try {
+        console.log('選擇題庫:', quiz);
+        
+        // 移除其他按鈕的選中狀態
+        document.querySelectorAll('.quiz-option').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        // 添加當前按鈕的選中狀態
+        event.target.classList.add('selected');
+        
+        // 如果是本地開發環境，使用內嵌的題目數據
+        if (CONFIG.isLocalDevelopment) {
+            console.log('檢測到本地開發環境，使用內嵌題目數據');
+            // 這裡可以添加內嵌的題目數據
+            const response = await fetch(CONFIG.questionsPath + quiz.file);
+            if (!response.ok) {
+                throw new Error('無法載入題庫文件');
+            }
+            const data = await response.json();
+            console.log('成功載入題庫:', data);
+            
+            // 保存題庫信息
+            quizInfo = data.info;
+            currentQuestions = data.questions;
+            
+            // 啟用開始按鈕
+            startBtn.disabled = !studentNameInput.value.trim();
+            
+            console.log('題庫選擇完成');
+            return;
+        }
+        
+        // 如果是通過 HTTP/HTTPS 訪問，從服務器載入題庫
+        const response = await fetch(CONFIG.questionsPath + quiz.file);
+        if (!response.ok) {
+            throw new Error('無法載入題庫文件');
+        }
+        const data = await response.json();
+        console.log('成功載入題庫:', data);
+        
+        // 保存題庫信息
+        quizInfo = data.info;
+        currentQuestions = data.questions;
+        
+        // 啟用開始按鈕
+        startBtn.disabled = !studentNameInput.value.trim();
+        
+        console.log('題庫選擇完成');
+    } catch (error) {
+        console.error('載入題庫失敗:', error);
+        alert('載入題庫失敗：' + error.message);
+    }
+}
+
+// 修改姓名輸入驗證
+studentNameInput.addEventListener('input', () => {
+    const name = studentNameInput.value.trim();
+    startBtn.disabled = !name || !currentQuestions;
 });
 
-startBtn.addEventListener('click', async () => {
+// 修改開始測驗按鈕事件
+startBtn.addEventListener('click', () => {
     studentName = studentNameInput.value.trim();
-    if (!studentName || !currentQuiz) return;
+    if (!studentName || !currentQuestions) return;
 
     try {
-        // 使用新的 startQuiz 函數
-        await startQuiz(currentQuiz);
+        startQuiz();
     } catch (error) {
         console.error('開始測驗失敗:', error);
         alert('開始測驗失敗，請稍後再試');
@@ -98,7 +240,7 @@ function showQuestion() {
     updateProgressBar();
 }
 
-// 選擇答案
+// 修改 selectOption 函數
 function selectOption(selectedIndex) {
     const question = currentQuestions[currentQuestionIndex];
     const buttons = optionsContainer.querySelectorAll('.option-btn');
@@ -116,7 +258,15 @@ function selectOption(selectedIndex) {
         score++;
     }
 
-    nextBtn.disabled = false;
+    // 直接進入下一題
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuestions.length) {
+            updateQuestion();
+        } else {
+            showResult();
+        }
+    }, 500); // 延遲 500ms 後進入下一題，讓用戶能看到自己的選擇
 }
 
 // 更新進度條
@@ -125,15 +275,39 @@ function updateProgressBar() {
     document.querySelector('.progress').style.width = `${progress}%`;
 }
 
-// 下一題
-nextBtn.addEventListener('click', () => {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < currentQuestions.length) {
-        showQuestion();
-    } else {
+// 修改 updateQuestion 函數
+function updateQuestion() {
+    if (currentQuestionIndex >= currentQuestions.length) {
         showResult();
+        return;
     }
-});
+
+    const question = currentQuestions[currentQuestionIndex];
+    questionText.textContent = question.question;
+    optionsContainer.innerHTML = '';
+    
+    // 更新剩餘題數顯示
+    const remainingQuestions = currentQuestions.length - currentQuestionIndex;
+    const progressText = document.querySelector('.progress-text');
+    if (progressText) {
+        progressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
+    } else {
+        const newProgressText = document.createElement('div');
+        newProgressText.className = 'progress-text';
+        newProgressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
+        document.querySelector('.question-container').appendChild(newProgressText);
+    }
+    
+    question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-btn';
+        button.textContent = option;
+        button.addEventListener('click', () => selectOption(index));
+        optionsContainer.appendChild(button);
+    });
+
+    updateProgressBar();
+}
 
 // 顯示結果
 function showResult() {
@@ -353,9 +527,6 @@ async function handleFileUpload(event) {
     }
     validateStartConditions();
 }
-
-// 監聽姓名輸入
-document.getElementById('student-name').addEventListener('input', validateStartConditions);
 
 // 從檔案載入題目的函式
 async function loadQuestionsFromFile(file) {
@@ -664,215 +835,27 @@ async function saveResult(studentName) {
     }
 }
 
-// 添加題庫數據
-const questionBanks = {
-    island: [
-        {
-            id: 101,
-            question: "在海島環境中，您如何確保研究數據的準確性？",
-            options: [
-                "不重視數據準確性",
-                "偶爾檢查數據",
-                "定期校準儀器",
-                "建立完整的數據品質控制系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 102,
-            question: "您是否按時完成海島環境監測報告？",
-            options: [
-                "從不按時",
-                "偶爾按時",
-                "經常按時",
-                "總是按時"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 103,
-            question: "在海島研究中，您如何處理突發狀況？",
-            options: [
-                "完全無法處理",
-                "被動應對",
-                "主動預防",
-                "建立完整的應變機制"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 104,
-            question: "您對海島生態系統的保護意識如何？",
-            options: [
-                "不重視",
-                "一般重視",
-                "非常重視",
-                "積極推動保護措施"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 105,
-            question: "在海島研究中，您如何確保團隊安全？",
-            options: [
-                "不重視安全",
-                "基本安全措施",
-                "完整安全計畫",
-                "建立緊急應變機制"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 106,
-            question: "您對海島環境監測的參與度如何？",
-            options: [
-                "從不參與",
-                "被動參與",
-                "積極參與",
-                "主導監測計畫"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 107,
-            question: "在海島研究中，您如何處理數據分析？",
-            options: [
-                "不進行分析",
-                "簡單分析",
-                "深入分析",
-                "建立完整的分析系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 108,
-            question: "您對海島研究的創新貢獻如何？",
-            options: [
-                "沒有創新",
-                "一般創新",
-                "積極創新",
-                "引領研究方向"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 109,
-            question: "在海島研究中，您如何確保研究品質？",
-            options: [
-                "不重視品質",
-                "基本品質要求",
-                "嚴格品質控制",
-                "建立完整的品質管理系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 110,
-            question: "您對海島研究的團隊合作如何？",
-            options: [
-                "不願合作",
-                "被動合作",
-                "積極合作",
-                "主動協調團隊"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 111,
-            question: "在海島研究中，您如何處理研究經費？",
-            options: [
-                "不重視經費",
-                "基本經費管理",
-                "嚴格經費控制",
-                "建立完整的經費管理系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 112,
-            question: "您對海島研究的時間管理如何？",
-            options: [
-                "不重視時間",
-                "基本時間管理",
-                "嚴格時間控制",
-                "建立完整的時間管理系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 113,
-            question: "在海島研究中，您如何確保研究倫理？",
-            options: [
-                "不重視倫理",
-                "基本倫理要求",
-                "嚴格倫理控制",
-                "建立完整的倫理管理系統"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 114,
-            question: "您對海島研究的知識分享如何？",
-            options: [
-                "不願分享",
-                "被動分享",
-                "積極分享",
-                "主動建立分享平台"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 115,
-            question: "在海島研究中，您如何處理研究衝突？",
-            options: [
-                "無法處理",
-                "被動處理",
-                "積極處理",
-                "建立完整的衝突處理機制"
-            ],
-            correct: 3,
-            weight: 1
-        },
-        {
-            id: 116,
-            question: "在海島環境中，何種方式可提升地下水永續性？",
-            options: [
-                "每日定量抽水",
-                "集中高效抽水",
-                "人工補注",
-                "雨水回收與地下補注"
-            ],
-            correct: 3,
-            weight: 1
-        }
-    ]
-};
-
 // 修改 loadQuestions 函數
 async function loadQuestions(quizType) {
     try {
-        // 使用內嵌的題庫數據
-        const questions = questionBanks[quizType];
-        if (!questions) {
-            throw new Error(`找不到題庫：${quizType}`);
+        // 根據測驗類型選擇對應的CSV文件
+        const csvFile = `./questions/${quizType}_questions.csv`;
+        console.log('正在載入題庫文件:', csvFile);
+        
+        const response = await fetch(csvFile);
+        if (!response.ok) {
+            throw new Error(`找不到題庫文件：${csvFile}`);
         }
         
-        console.log('成功讀取題庫數據'); // 添加日誌
-        console.log('題目總數:', questions.length); // 添加日誌
+        const csvData = await response.text();
+        console.log('成功讀取CSV文件');
+        
+        const questions = parseCSV(csvData);
+        console.log('成功解析題目數量:', questions.length);
+        
+        if (questions.length === 0) {
+            throw new Error('題庫為空');
+        }
         
         // 隨機選擇10題
         const selectedQuestions = [];
@@ -886,7 +869,7 @@ async function loadQuestions(quizType) {
             }
         }
         
-        console.log('成功選擇題目數量:', selectedQuestions.length); // 添加日誌
+        console.log('成功選擇題目數量:', selectedQuestions.length);
         return selectedQuestions;
     } catch (error) {
         console.error('載入題目失敗:', error);
@@ -896,21 +879,20 @@ async function loadQuestions(quizType) {
 }
 
 // 修改 startQuiz 函數
-async function startQuiz(quizType) {
+function startQuiz() {
     try {
-        console.log('開始載入測驗:', quizType);
-        
-        const questions = await loadQuestions(quizType);
-        if (questions.length === 0) {
-            return;
+        if (!currentQuestions || currentQuestions.length === 0) {
+            throw new Error('請先選擇題庫');
         }
 
-        currentQuiz = quizType;
-        currentQuestions = questions;
         currentQuestionIndex = 0;
         score = 0;
 
-        showScreen('quiz');
+        // 隱藏開始畫面，顯示測驗畫面
+        startScreen.classList.remove('active');
+        quizScreen.classList.add('active');
+
+        // 更新第一個問題
         updateQuestion();
     } catch (error) {
         console.error('開始測驗失敗:', error);
@@ -939,36 +921,6 @@ function showScreen(screenName) {
     }
 }
 
-// 修改 updateQuestion 函數
-function updateQuestion() {
-    if (currentQuestionIndex >= currentQuestions.length) {
-        showResult();
-        return;
-    }
-
-    const question = currentQuestions[currentQuestionIndex];
-    questionText.textContent = question.question;
-    optionsContainer.innerHTML = '';
-    
-    // 添加剩餘題數顯示
-    const remainingQuestions = currentQuestions.length - currentQuestionIndex;
-    const progressText = document.createElement('div');
-    progressText.className = 'progress-text';
-    progressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
-    document.querySelector('.question-container').appendChild(progressText);
-    
-    question.options.forEach((option, index) => {
-        const button = document.createElement('button');
-        button.className = 'option-btn';
-        button.textContent = option;
-        button.addEventListener('click', () => selectOption(index));
-        optionsContainer.appendChild(button);
-    });
-
-    nextBtn.disabled = true;
-    updateProgressBar();
-}
-
 // 修改 startTimer 函數
 function startTimer() {
     const timerDisplay = document.createElement('div');
@@ -987,4 +939,81 @@ function startTimer() {
             selectOption(-1); // 超時自動選擇
         }
     }, 1000);
-} 
+}
+
+// 修改文件上傳事件監聽器
+document.getElementById('uploadBtn').addEventListener('click', () => {
+    document.getElementById('questionFile').click();
+});
+
+document.getElementById('questionFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+            
+            // 驗證 JSON 格式
+            if (!data.info || !data.questions) {
+                throw new Error('JSON 文件格式不正確');
+            }
+
+            // 保存題庫信息
+            quizInfo = data.info;
+            currentQuestions = data.questions;
+
+            // 顯示題庫信息
+            const quizInfoDiv = document.getElementById('quizInfo');
+            quizInfoDiv.innerHTML = `
+                <div class="quiz-info-content">
+                    <h4>題庫信息</h4>
+                    <p>名稱：${quizInfo.name}</p>
+                    <p>描述：${quizInfo.description}</p>
+                    <p>題目數量：${currentQuestions.length}</p>
+                </div>
+            `;
+            quizInfoDiv.style.display = 'block';
+
+            // 啟用開始按鈕
+            startBtn.disabled = !studentNameInput.value.trim();
+        } catch (error) {
+            console.error('解析 JSON 文件失敗:', error);
+            alert('解析題庫失敗，請檢查文件格式。\n錯誤信息：' + error.message);
+            document.getElementById('quizInfo').style.display = 'none';
+            currentQuestions = null;
+            startBtn.disabled = true;
+        }
+    };
+    reader.readAsText(file);
+});
+
+// 添加 CSV 解析函數
+function parseCSV(csvData) {
+    const lines = csvData.split('\n');
+    const questions = [];
+    
+    // 跳過標題行
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const [id, question, option1, option2, option3, option4, correct, weight] = line.split(',');
+        
+        if (id && question && option1 && option2 && option3 && option4 && correct && weight) {
+            questions.push({
+                id: parseInt(id),
+                question: question,
+                options: [option1, option2, option3, option4],
+                correct: parseInt(correct),
+                weight: parseInt(weight)
+            });
+        }
+    }
+    
+    return questions;
+}
+
+// 頁面載入時載入題庫列表
+document.addEventListener('DOMContentLoaded', loadAvailableQuizzes); 

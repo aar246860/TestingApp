@@ -54,11 +54,23 @@ body {
 
 /* 文件上传区域 */
 .file-upload {
-    margin: 2rem 0;
-    padding: 1.5rem;
-    background: #f8fafc;
-    border-radius: var(--border-radius);
-    border: 2px dashed #e2e8f0;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.upload-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.upload-btn:hover {
+    background: #45a049;
 }
 
 .file-upload:hover {
@@ -684,4 +696,331 @@ h2 {
 .answer-item .option.wrong {
     background: #fee2e2;
     color: #991b1b;
+}
+
+/* 基本樣式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft JhengHei', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* 畫面切換 */
+.screen {
+    display: none;
+    text-align: center;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* 標題樣式 */
+h1 {
+    color: #1e293b;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+}
+
+h2 {
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+/* 題庫選擇區域 */
+.quiz-type {
+    margin-bottom: 2rem;
+}
+
+.quiz-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.quiz-option {
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    color: #1e293b;
+}
+
+.quiz-option:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+.quiz-option.selected {
+    background: #e0e7ff;
+    border-color: #6366f1;
+    color: #4f46e5;
+}
+
+/* 輸入區域 */
+.input-group {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+input[type="text"] {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.8rem 1rem;
+    font-size: 1.1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+/* 按鈕樣式 */
+.btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    color: white;
+    background: #6366f1;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.btn:hover {
+    background: #4f46e5;
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 問題容器 */
+.question-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    margin-bottom: 2rem;
+}
+
+/* 進度條 */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.progress {
+    width: 0%;
+    height: 100%;
+    background: #6366f1;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+/* 選項按鈕 */
+.options-container {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.option-btn {
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    text-align: left;
+}
+
+.option-btn:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+.option-btn:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 結果畫面 */
+.result-content {
+    margin-top: 2rem;
+}
+
+.score-box {
+    background: #f8fafc;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: inline-block;
+    min-width: 200px;
+}
+
+.score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #6366f1;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 1rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+.feedback {
+    font-size: 1.2rem;
+    color: #1e293b;
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+/* 錯誤題目列表 */
+.wrong-questions {
+    text-align: left;
+    margin-top: 2rem;
+}
+
+.answer-item {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #ef4444;
+}
+
+.answer-item.correct {
+    border-left-color: #22c55e;
+}
+
+.answer-item h4 {
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.answer-item .question {
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.answer-item .options {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.answer-item .option {
+    padding: 0.5rem;
+    border-radius: 4px;
+    background: white;
+}
+
+.answer-item .option.correct {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.answer-item .option.wrong {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* 成績單樣式 */
+.result-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.result-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.result-header h2 {
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.result-header p {
+    color: #64748b;
+    margin: 0.5rem 0;
+}
+
+.score-summary {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .container {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .quiz-list {
+        grid-template-columns: 1fr;
+    }
+
+    .score-box {
+        min-width: 150px;
+    }
+
+    .score {
+        font-size: 2.5rem;
+    }
 } 

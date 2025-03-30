@@ -3,75 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專題貢獻測驗系統</title>
+    <title>測驗系統</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- 加入 html2canvas 函式庫 -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- 開始頁面 -->
         <div id="start-screen" class="screen active">
-            <h1>專題貢獻測驗系統</h1>
-            <div class="name-input">
-                <label for="student-name">請輸入您的姓名：</label>
+            <h1>測驗系統</h1>
+            <div class="quiz-type">
+                <h3>請選擇題庫</h3>
+                <div id="quiz-list" class="quiz-list">
+                    <!-- 題庫列表將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+            <div class="input-group">
                 <input type="text" id="student-name" placeholder="請輸入姓名" required>
             </div>
-            <div class="quiz-selection">
-                <h3>請選擇測驗題庫：</h3>
-                <div class="quiz-buttons">
-                    <button class="btn quiz-btn" data-quiz="dingxiang">鼎翔</button>
-                    <button class="btn quiz-btn" data-quiz="yuxiang">于翔</button>
-                    <button class="btn quiz-btn" data-quiz="thermal">熱響應組</button>
-                    <button class="btn quiz-btn" data-quiz="island">海島組</button>
-                    <button class="btn quiz-btn" data-quiz="trt">TRT test</button>
-                </div>
-            </div>
-            <button id="start-btn" class="btn primary" disabled>開始測驗</button>
+            <button id="start-btn" class="btn" disabled>開始測驗</button>
         </div>
 
-        <!-- 測驗頁面 -->
         <div id="quiz-screen" class="screen">
-            <div class="progress-bar">
-                <div class="progress"></div>
-            </div>
             <div class="question-container">
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+                <div class="progress-text"></div>
                 <h2 id="question-text"></h2>
-            </div>
-            <div class="options-container" id="options-container">
-                <!-- 選項將透過 JavaScript 動態產生 -->
-            </div>
-            <div class="navigation">
-                <button id="next-btn" class="btn secondary" disabled>
-                    <i class="fas fa-arrow-right"></i> 下一題
-                </button>
+                <div id="options-container" class="options-container"></div>
             </div>
         </div>
 
-        <!-- 結果頁面 -->
         <div id="result-screen" class="screen">
             <h2>測驗結果</h2>
-            <div class="score-container">
-                <div class="score-item">
+            <div class="result-content">
+                <div class="score-box">
                     <h3>得分</h3>
-                    <div id="final-score">0</div>
+                    <div id="final-score" class="score">0</div>
                     <div class="score-label">/ 100</div>
                 </div>
-                <div class="score-item">
+                <div class="score-box">
                     <h3>貢獻度</h3>
-                    <div id="contribution-score">0</div>
+                    <div id="contribution-score" class="score">0</div>
                     <div class="score-label">%</div>
                 </div>
+                <div id="feedback" class="feedback"></div>
+                <div id="wrong-questions" class="wrong-questions"></div>
             </div>
-            <div id="feedback" class="feedback"></div>
-            <div id="wrong-questions" class="wrong-questions"></div>
+            <button id="save-result" class="btn">儲存成績單</button>
         </div>
     </div>
-    <footer class="footer">
-        <p>製作人：Ying-Fan Lin</p>
-        <p>© 2025 專題貢獻測驗系統</p>
-    </footer>
     <script src="script.js"></script>
 </body>
 </html> 
