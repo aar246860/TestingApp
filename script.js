@@ -11,7 +11,7 @@
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
     questionsPath: window.location.hostname.includes('github.io') 
-        ? '/TestingApp/questions/'  // GitHub Pages 路徑
+        ? './questions/'  // 修改為相對路徑
         : './questions/',  // 本地開發路徑
     isLocalDevelopment: !window.location.hostname.includes('github.io')
 };
