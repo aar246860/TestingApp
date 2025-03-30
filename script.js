@@ -651,66 +651,65 @@ function startTimer() {
 
 // 修改文件上傳事件監聽器
 uploadBtn.addEventListener('click', async () => {
-    if (CONFIG.isLocalDevelopment) {
-        fileInput.click();
-    } else {
-        try {
-            // 在 GitHub Pages 環境下，直接從 questions 目錄加載題庫
-            const response = await fetch(CONFIG.questionsPath + 'quiz_list.json');
-            if (!response.ok) {
-                throw new Error(`無法載入題庫列表: ${response.status} ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            if (!data.quizzes || !Array.isArray(data.quizzes)) {
-                throw new Error('題庫列表格式不正確');
-            }
-            
-            // 顯示題庫選擇對話框
-            const quizName = prompt('請輸入要載入的題庫名稱：\n' + 
-                data.quizzes.map(q => q.name).join('\n'));
-                
-            if (!quizName) return;
-            
-            const selectedQuiz = data.quizzes.find(q => q.name === quizName);
-            if (!selectedQuiz) {
-                throw new Error('找不到指定的題庫');
-            }
-            
-            // 載入選擇的題庫
-            const quizResponse = await fetch(CONFIG.questionsPath + selectedQuiz.file);
-            if (!quizResponse.ok) {
-                throw new Error(`無法載入題庫文件: ${quizResponse.status} ${quizResponse.statusText}`);
-            }
-            
-            const quizData = await quizResponse.json();
-            
-            // 保存題庫信息
-            quizInfo = {
-                name: selectedQuiz.name,
-                description: quizData.info?.description || selectedQuiz.description,
-                version: quizData.info?.version || '1.0'
-            };
-            currentQuestions = quizData.questions;
-
-            // 顯示題庫信息
-            quizInfoDiv.innerHTML = `
-                <div class="quiz-info-content">
-                    <h4>題庫信息</h4>
-                    <p>名稱：${quizInfo.name}</p>
-                    <p>描述：${quizInfo.description}</p>
-                    <p>題目數量：${currentQuestions.length}</p>
-                </div>
-            `;
-            quizInfoDiv.style.display = 'block';
-
-            // 啟用開始按鈕
-            startBtn.disabled = !studentNameInput.value.trim();
-            
-        } catch (error) {
-            console.error('載入題庫失敗:', error);
-            alert('載入題庫失敗：' + error.message);
+    try {
+        // 不論是本地還是 GitHub Pages 環境，都從 questions 目錄加載題庫
+        const quizListPath = CONFIG.questionsPath + 'quiz_list.json';
+        console.log('嘗試載入題庫列表:', quizListPath);
+        
+        const response = await fetch(quizListPath);
+        if (!response.ok) {
+            throw new Error(`無法載入題庫列表: ${response.status} ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        if (!data.quizzes || !Array.isArray(data.quizzes)) {
+            throw new Error('題庫列表格式不正確');
+        }
+        
+        // 顯示題庫選擇對話框
+        const quizOptions = data.quizzes.map(q => q.name).join('\n');
+        const quizName = prompt('請選擇要載入的題庫：\n' + quizOptions);
+            
+        if (!quizName) return;
+        
+        const selectedQuiz = data.quizzes.find(q => q.name === quizName);
+        if (!selectedQuiz) {
+            throw new Error('找不到指定的題庫');
+        }
+        
+        // 載入選擇的題庫
+        const quizResponse = await fetch(CONFIG.questionsPath + selectedQuiz.file);
+        if (!quizResponse.ok) {
+            throw new Error(`無法載入題庫文件: ${quizResponse.status} ${quizResponse.statusText}`);
+        }
+        
+        const quizData = await quizResponse.json();
+        
+        // 保存題庫信息
+        quizInfo = {
+            name: selectedQuiz.name,
+            description: quizData.info?.description || selectedQuiz.description,
+            version: quizData.info?.version || '1.0'
+        };
+        currentQuestions = quizData.questions;
+
+        // 顯示題庫信息
+        quizInfoDiv.innerHTML = `
+            <div class="quiz-info-content">
+                <h4>題庫信息</h4>
+                <p>名稱：${quizInfo.name}</p>
+                <p>描述：${quizInfo.description}</p>
+                <p>題目數量：${currentQuestions.length}</p>
+            </div>
+        `;
+        quizInfoDiv.style.display = 'block';
+
+        // 啟用開始按鈕
+        startBtn.disabled = !studentNameInput.value.trim();
+        
+    } catch (error) {
+        console.error('載入題庫失敗:', error);
+        alert('載入題庫失敗：' + error.message + '\n請確保 questions 目錄中有正確的題庫文件。');
     }
 });
 
