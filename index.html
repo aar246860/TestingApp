@@ -18,25 +18,15 @@
                 <label for="student-name">請輸入您的姓名：</label>
                 <input type="text" id="student-name" placeholder="請輸入姓名" required>
             </div>
-            <div class="file-upload">
-                <input type="file" id="file-input" accept=".json,.csv" style="display: none;">
-                <button id="upload-btn" class="btn primary">
-                    <i class="fas fa-file-upload"></i> 匯入題目
-                </button>
-                <a href="questions_template.csv" download class="btn secondary">
-                    <i class="fas fa-download"></i> 下載模板
-                </a>
-            </div>
-            <div class="file-instructions">
-                <h3>CSV 檔案格式說明：</h3>
-                <p>第一列必須包含以下欄位：</p>
-                <code>id,question,option1,option2,option3,option4,correct</code>
-                <ul>
-                    <li>id：題號（數字）</li>
-                    <li>question：題目內容</li>
-                    <li>option1-4：選項內容</li>
-                    <li>correct：正確答案（0-3，對應選項1-4）</li>
-                </ul>
+            <div class="quiz-selection">
+                <h3>請選擇測驗題庫：</h3>
+                <div class="quiz-buttons">
+                    <button class="btn quiz-btn" data-quiz="dingxiang">鼎翔</button>
+                    <button class="btn quiz-btn" data-quiz="yuxiang">于翔</button>
+                    <button class="btn quiz-btn" data-quiz="thermal">熱響應組</button>
+                    <button class="btn quiz-btn" data-quiz="island">海島組</button>
+                    <button class="btn quiz-btn" data-quiz="trt">TRT test</button>
+                </div>
             </div>
             <button id="start-btn" class="btn primary" disabled>開始測驗</button>
         </div>
