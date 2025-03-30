@@ -1,8 +1,19 @@
+/**
+ * 測驗系統 (Quiz System)
+ * Copyright © 2024 Ying-Fan Lin
+ * All rights reserved.
+ * 
+ * 此代碼受版權法保護。未經作者明確許可，
+ * 不得以任何形式複製、修改或分發本軟件。
+ */
+
 // 測驗系統設定
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
-    questionsPath: '/quiz-app/questions/',  // 修改為 GitHub Pages 路徑
-    isLocalDevelopment: window.location.protocol === 'file:'  // 檢查是否為本地開發環境
+    questionsPath: window.location.hostname === 'localhost' || window.location.protocol === 'file:' 
+        ? './questions/'  // 本地開發路徑
+        : '/TestingApp/questions/',  // GitHub Pages 路徑
+    isLocalDevelopment: window.location.hostname === 'localhost' || window.location.protocol === 'file:'
 };
 
 // 防止重新整理和重複作答
