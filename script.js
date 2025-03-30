@@ -10,10 +10,10 @@
 // 測驗系統設定
 const CONFIG = {
     maxQuestionsPerQuiz: 10,  // 每次測驗的最大題目數量
-    questionsPath: window.location.hostname === 'localhost' || window.location.protocol === 'file:' 
-        ? './questions/'  // 本地開發路徑
-        : '/TestingApp/questions/',  // GitHub Pages 路徑
-    isLocalDevelopment: window.location.hostname === 'localhost' || window.location.protocol === 'file:'
+    questionsPath: window.location.hostname.includes('github.io') 
+        ? '/TestingApp/questions/'  // GitHub Pages 路徑
+        : './questions/',  // 本地開發路徑
+    isLocalDevelopment: !window.location.hostname.includes('github.io')
 };
 
 // 防止重新整理和重複作答
@@ -650,34 +650,48 @@ function startTimer() {
 }
 
 // 修改文件上傳事件監聽器
-uploadBtn.addEventListener('click', () => {
-    fileInput.click();
-});
-
-fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
+uploadBtn.addEventListener('click', async () => {
+    if (CONFIG.isLocalDevelopment) {
+        fileInput.click();
+    } else {
         try {
-            const data = JSON.parse(event.target.result);
-            
-            // 驗證 JSON 格式
-            if (!data.questions || !Array.isArray(data.questions)) {
-                throw new Error('JSON 文件格式不正確');
+            // 在 GitHub Pages 環境下，直接從 questions 目錄加載題庫
+            const response = await fetch(CONFIG.questionsPath + 'quiz_list.json');
+            if (!response.ok) {
+                throw new Error(`無法載入題庫列表: ${response.status} ${response.statusText}`);
             }
-
-            // 從文件名稱獲取題庫名稱（移除 .json 副檔名）
-            const quizName = file.name.replace('.json', '');
+            
+            const data = await response.json();
+            if (!data.quizzes || !Array.isArray(data.quizzes)) {
+                throw new Error('題庫列表格式不正確');
+            }
+            
+            // 顯示題庫選擇對話框
+            const quizName = prompt('請輸入要載入的題庫名稱：\n' + 
+                data.quizzes.map(q => q.name).join('\n'));
+                
+            if (!quizName) return;
+            
+            const selectedQuiz = data.quizzes.find(q => q.name === quizName);
+            if (!selectedQuiz) {
+                throw new Error('找不到指定的題庫');
+            }
+            
+            // 載入選擇的題庫
+            const quizResponse = await fetch(CONFIG.questionsPath + selectedQuiz.file);
+            if (!quizResponse.ok) {
+                throw new Error(`無法載入題庫文件: ${quizResponse.status} ${quizResponse.statusText}`);
+            }
+            
+            const quizData = await quizResponse.json();
             
             // 保存題庫信息
             quizInfo = {
-                name: quizName,
-                description: data.info?.description || '無描述',
-                version: data.info?.version || '1.0'
+                name: selectedQuiz.name,
+                description: quizData.info?.description || selectedQuiz.description,
+                version: quizData.info?.version || '1.0'
             };
-            currentQuestions = data.questions;
+            currentQuestions = quizData.questions;
 
             // 顯示題庫信息
             quizInfoDiv.innerHTML = `
@@ -692,15 +706,12 @@ fileInput.addEventListener('change', (e) => {
 
             // 啟用開始按鈕
             startBtn.disabled = !studentNameInput.value.trim();
+            
         } catch (error) {
-            console.error('解析 JSON 文件失敗:', error);
-            alert('解析題庫失敗，請檢查文件格式。\n錯誤信息：' + error.message);
-            quizInfoDiv.style.display = 'none';
-            currentQuestions = null;
-            startBtn.disabled = true;
+            console.error('載入題庫失敗:', error);
+            alert('載入題庫失敗：' + error.message);
         }
-    };
-    reader.readAsText(file);
+    }
 });
 
 // 解析 CSV 檔案
