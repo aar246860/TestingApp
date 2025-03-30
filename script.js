@@ -344,23 +344,25 @@ function showResult() {
     }
     feedback.textContent = feedbackText;
 
-    // 顯示所有題目的答案詳情
-    const answersHTML = currentQuestions.map((q, index) => {
-        const isCorrect = q.correct === q.selectedAnswer;
-        return `
-            <div class="answer-item ${isCorrect ? 'correct' : 'wrong'}">
-                <h4>第 ${index + 1} 題</h4>
-                <p class="question">${q.question}</p>
-                <div class="options">
-                    ${q.options.map((opt, i) => `
-                        <div class="option ${i === q.correct ? 'correct' : i === q.selectedAnswer ? 'wrong' : ''}">
-                            ${opt}
+    // 只顯示錯誤題目的答案詳情
+    const wrongAnswersHTML = currentQuestions
+        .filter(q => q.correct !== q.selectedAnswer) // 只篩選錯誤的題目
+        .map((q, index) => {
+            return `
+                <div class="answer-item wrong">
+                    <h4>第 ${currentQuestions.indexOf(q) + 1} 題</h4>
+                    <p class="question">${q.question}</p>
+                    <div class="options">
+                        <div class="option wrong">
+                            您的答案：${q.options[q.selectedAnswer]}
                         </div>
-                    `).join('')}
+                        <div class="option correct">
+                            正確答案：${q.options[q.correct]}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
     // 添加測驗信息到結果頁面
     const resultInfo = document.createElement('div');
@@ -373,14 +375,16 @@ function showResult() {
             <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
             <p>完成時間：${endTime.toLocaleTimeString('zh-TW')}</p>
             <p>測驗時長：${minutes}分${seconds}秒</p>
+            <p>答對題數：${score} / ${currentQuestions.length}</p>
         </div>
     `;
     resultScreen.insertBefore(resultInfo, resultScreen.firstChild);
 
-    wrongQuestions.innerHTML = `
-        <h3>答案詳情：</h3>
-        ${answersHTML}
-    `;
+    const wrongCount = currentQuestions.filter(q => q.correct !== q.selectedAnswer).length;
+    wrongQuestions.innerHTML = wrongCount > 0 ? `
+        <h3>需要改進的題目（${wrongCount} 題）：</h3>
+        ${wrongAnswersHTML}
+    ` : '<h3>恭喜！您答對了所有題目！</h3>';
 
     // 自動截圖
     setTimeout(() => {
@@ -400,6 +404,9 @@ async function captureResult() {
                 <p>姓名：${studentName}</p>
                 <p>題庫：${quizInfo.name}</p>
                 <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
+                <p>完成時間：${endTime.toLocaleTimeString('zh-TW')}</p>
+                <p>測驗時長：${Math.floor((endTime - startTime) / 60000)}分${Math.floor(((endTime - startTime) % 60000) / 1000)}秒</p>
+                <p>答對題數：${score} / ${currentQuestions.length}</p>
             </div>
             <div class="result-content">
                 <div class="score-summary">
@@ -570,6 +577,9 @@ function startQuiz() {
         if (!currentQuestions || currentQuestions.length === 0) {
             throw new Error('請先匯入題庫');
         }
+
+        // 隨機打亂題目順序
+        currentQuestions = [...currentQuestions].sort(() => Math.random() - 0.5);
 
         currentQuestionIndex = 0;
         score = 0;
