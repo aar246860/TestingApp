@@ -26,6 +26,7 @@ let studentName = '';
 let quizInfo = null;
 let startTime = null;
 let endTime = null;
+let selectedQuizIndex = -1; // 添加選中的題庫索引變量
 
 // 添加文件上傳相關變量
 let uploadedQuestions = null;
@@ -40,126 +41,235 @@ let feedback, wrongQuestions, fileInput, uploadBtn, saveResultButton, quizInfoDi
 let quizList;  // 明確定義quizList變量
 
 // 等待DOM完全加載後初始化
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', function() {
+    // 首先立即創建或準備調試容器
+    let debugInfo = document.getElementById('debug-info');
+    if (!debugInfo) {
+        debugInfo = document.createElement('div');
+        debugInfo.id = 'debug-info';
+        debugInfo.style.display = 'block';
+        debugInfo.style.position = 'fixed';
+        debugInfo.style.bottom = '0';
+        debugInfo.style.right = '0';
+        debugInfo.style.width = '400px';
+        debugInfo.style.maxHeight = '300px';
+        debugInfo.style.overflow = 'auto';
+        debugInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        debugInfo.style.color = '#00FF00';
+        debugInfo.style.fontFamily = 'monospace';
+        debugInfo.style.fontSize = '12px';
+        debugInfo.style.padding = '10px';
+        debugInfo.style.zIndex = '9999';
+        debugInfo.style.borderTop = '1px solid #00FF00';
+        debugInfo.style.borderLeft = '1px solid #00FF00';
+        
+        const debugTitle = document.createElement('h3');
+        debugTitle.textContent = '調試信息 (Debug Info)';
+        debugTitle.style.margin = '0 0 10px 0';
+        debugTitle.style.borderBottom = '1px solid #00FF00';
+        debugTitle.style.paddingBottom = '5px';
+        debugInfo.appendChild(debugTitle);
+        
+        // 添加一個操作按鈕區
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.marginBottom = '10px';
+        
+        // 添加清除按鈕
+        const clearButton = document.createElement('button');
+        clearButton.textContent = '清除日誌';
+        clearButton.style.backgroundColor = '#333';
+        clearButton.style.color = '#00FF00';
+        clearButton.style.border = '1px solid #00FF00';
+        clearButton.style.marginRight = '10px';
+        clearButton.style.padding = '3px 8px';
+        clearButton.style.cursor = 'pointer';
+        clearButton.onclick = function() {
+            const logEntries = debugInfo.querySelectorAll('.log-entry');
+            logEntries.forEach(entry => entry.remove());
+        };
+        buttonContainer.appendChild(clearButton);
+        
+        // 添加隱藏按鈕
+        const hideButton = document.createElement('button');
+        hideButton.textContent = '隱藏日誌';
+        hideButton.style.backgroundColor = '#333';
+        hideButton.style.color = '#00FF00';
+        hideButton.style.border = '1px solid #00FF00';
+        hideButton.style.padding = '3px 8px';
+        hideButton.style.cursor = 'pointer';
+        hideButton.onclick = function() {
+            debugInfo.style.display = 'none';
+            
+            // 添加一個小按鈕用於重新顯示
+            const showButton = document.createElement('button');
+            showButton.textContent = 'DEBUG';
+            showButton.style.position = 'fixed';
+            showButton.style.bottom = '0';
+            showButton.style.right = '0';
+            showButton.style.backgroundColor = '#333';
+            showButton.style.color = '#00FF00';
+            showButton.style.border = '1px solid #00FF00';
+            showButton.style.padding = '3px 8px';
+            showButton.style.cursor = 'pointer';
+            showButton.style.zIndex = '9999';
+            showButton.onclick = function() {
+                debugInfo.style.display = 'block';
+                document.body.removeChild(showButton);
+            };
+            document.body.appendChild(showButton);
+        };
+        buttonContainer.appendChild(hideButton);
+        
+        debugInfo.appendChild(buttonContainer);
+        
+        // 創建日誌容器
+        const logContainer = document.createElement('div');
+        logContainer.className = 'log-container';
+        debugInfo.appendChild(logContainer);
+        
+        document.body.appendChild(debugInfo);
+    } else {
+        // 確保調試容器可見
+        debugInfo.style.display = 'block';
+    }
+    
+    // 現在加載主應用程序
+    initializeApp();
+});
 
 // 初始化應用程序
 function initializeApp() {
     console.log('初始化測驗系統...');
     
-    // 添加調試函數
-    window.debugLog = function(message) {
-        console.log(message);
-        const debugInfo = document.getElementById('debug-info');
-        if (debugInfo) {
-            debugInfo.style.display = 'block';
-            const logMessage = document.createElement('div');
-            logMessage.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            debugInfo.appendChild(logMessage);
-            // 限制顯示的消息數量
-            if (debugInfo.children.length > 50) {
-                debugInfo.removeChild(debugInfo.firstChild);
-            }
-            // 自動滾動到底部
-            debugInfo.scrollTop = debugInfo.scrollHeight;
-        }
-    };
-    
-    // 啟用調試模式
-    debugLog('測驗系統初始化中...');
+    try {
+        // 啟用調試模式
+        debugLog('測驗系統初始化中...');
+        debugLog(`運行環境: ${window.location.hostname || '本地'}`);
+        debugLog(`瀏覽器: ${navigator.userAgent}`);
 
-    // 獲取所有DOM元素
-    startScreen = document.getElementById('start-screen');
-    quizScreen = document.getElementById('quiz-screen');
-    resultScreen = document.getElementById('result-screen');
-    studentNameInput = document.getElementById('student-name');
-    startBtn = document.getElementById('start-btn');
-    questionText = document.getElementById('question-text');
-    optionsContainer = document.getElementById('options-container');
-    nextBtn = document.getElementById('next-btn');
-    finalScore = document.getElementById('final-score');
-    contributionScore = document.getElementById('contribution-score');
-    feedback = document.getElementById('feedback');
-    wrongQuestions = document.getElementById('wrong-questions');
-    fileInput = document.getElementById('questionFile');
-    uploadBtn = document.getElementById('uploadBtn');
-    saveResultButton = document.getElementById('save-result');
-    quizInfoDiv = document.getElementById('quizInfo');
-    quizList = document.getElementById('quiz-list');
-    
-    // 檢查關鍵元素是否存在
-    if (!uploadBtn) debugLog('警告: 找不到上傳按鈕元素!');
-    if (!quizList) debugLog('警告: 找不到題庫列表容器!');
-    if (!startBtn) debugLog('警告: 找不到開始按鈕元素!');
-
-    // 確保必要的DOM元素存在
-    if (!quizList) {
-        debugLog('找不到題庫列表容器，嘗試創建一個');
-        quizList = document.createElement('div');
-        quizList.id = 'quiz-list';
-        quizList.className = 'quiz-list';
+        // 獲取所有DOM元素
+        startScreen = document.getElementById('start-screen');
+        quizScreen = document.getElementById('quiz-screen');
+        resultScreen = document.getElementById('result-screen');
+        studentNameInput = document.getElementById('student-name');
+        startBtn = document.getElementById('start-btn');
+        questionText = document.getElementById('question-text');
+        optionsContainer = document.getElementById('options-container');
+        nextBtn = document.getElementById('next-btn');
+        finalScore = document.getElementById('final-score');
+        contributionScore = document.getElementById('contribution-score');
+        feedback = document.getElementById('feedback');
+        wrongQuestions = document.getElementById('wrong-questions');
+        fileInput = document.getElementById('questionFile');
+        uploadBtn = document.getElementById('uploadBtn');
+        saveResultButton = document.getElementById('save-result');
+        quizInfoDiv = document.getElementById('quizInfo');
+        quizList = document.getElementById('quiz-list');
         
-        // 找到合適的位置插入題庫列表
-        const inputGroup = document.querySelector('.input-group');
-        if (inputGroup) {
-            if (quizInfoDiv) {
-                inputGroup.insertBefore(quizList, quizInfoDiv);
+        // 檢查關鍵元素是否存在
+        if (!startScreen) debugLog('錯誤: 找不到開始畫面元素 (start-screen)');
+        if (!quizScreen) debugLog('錯誤: 找不到測驗畫面元素 (quiz-screen)');
+        if (!resultScreen) debugLog('錯誤: 找不到結果畫面元素 (result-screen)');
+        if (!uploadBtn) debugLog('錯誤: 找不到上傳按鈕元素 (uploadBtn)');
+        if (!quizList) debugLog('錯誤: 找不到題庫列表容器 (quiz-list)');
+        if (!startBtn) debugLog('錯誤: 找不到開始按鈕元素 (start-btn)');
+
+        // 確保必要的DOM元素存在
+        if (!quizList) {
+            debugLog('找不到題庫列表容器，嘗試創建一個');
+            quizList = document.createElement('div');
+            quizList.id = 'quiz-list';
+            quizList.className = 'quiz-list';
+            
+            // 找到合適的位置插入題庫列表
+            const inputGroup = document.querySelector('.input-group');
+            if (inputGroup) {
+                if (quizInfoDiv) {
+                    inputGroup.insertBefore(quizList, quizInfoDiv);
+                } else {
+                    inputGroup.appendChild(quizList);
+                }
+                debugLog('成功創建題庫列表容器');
             } else {
-                inputGroup.appendChild(quizList);
+                document.body.appendChild(quizList);
+                debugLog('無法找到合適的容器來放置題庫列表，已添加到body');
             }
-            debugLog('成功創建題庫列表容器');
-        } else {
-            document.body.appendChild(quizList);
-            debugLog('無法找到合適的容器來放置題庫列表，已添加到body');
         }
+
+        // 添加事件監聽器
+        if (uploadBtn) {
+            // 先移除可能存在的舊事件監聽器
+            uploadBtn.removeEventListener('click', handleUploadBtnClick);
+            // 添加新的事件監聽器
+            uploadBtn.addEventListener('click', handleUploadBtnClick);
+            debugLog('已為匯入題庫按鈕添加事件監聽器');
+        } else {
+            debugLog('錯誤: 找不到上傳按鈕元素');
+        }
+
+        if (studentNameInput) {
+            studentNameInput.addEventListener('input', () => {
+                const name = studentNameInput.value.trim();
+                if (startBtn) {
+                    startBtn.disabled = !name || !currentQuestions || currentQuestions.length === 0;
+                    debugLog(`學生姓名: ${name}, 開始按鈕狀態: ${!startBtn.disabled ? '啟用' : '禁用'}`);
+                }
+            });
+        } else {
+            debugLog('錯誤: 找不到姓名輸入框元素 (student-name)');
+        }
+
+        if (startBtn) {
+            // 移除可能存在的舊事件監聽器
+            startBtn.removeEventListener('click', startQuizHandler);
+            // 添加新的事件監聽器
+            startBtn.addEventListener('click', startQuizHandler);
+            debugLog('已為開始測驗按鈕添加事件監聽器');
+        } else {
+            debugLog('錯誤: 找不到開始按鈕元素');
+        }
+
+        // 防止重新整理和重複作答
+        window.onbeforeunload = function() {
+            return "確定要離開測驗嗎？您的進度將會遺失。";
+        };
+        
+        // 初始化完成
+        debugLog('測驗系統初始化完成');
+        
+        // 嘗試立即加載題庫
+        setTimeout(handleUploadBtnClick, 500);
+    } catch (error) {
+        console.error('初始化測驗系統時發生錯誤:', error);
+        alert('初始化測驗系統時發生錯誤: ' + error.message);
     }
+}
 
-    // 添加事件監聽器
-    if (uploadBtn) {
-        // 先移除可能存在的舊事件監聽器
-        uploadBtn.removeEventListener('click', handleUploadBtnClick);
-        // 添加新的事件監聽器
-        uploadBtn.addEventListener('click', handleUploadBtnClick);
-        debugLog('已為匯入題庫按鈕添加事件監聽器');
-    } else {
-        debugLog('錯誤: 找不到上傳按鈕元素');
-    }
-
-    if (studentNameInput) {
-        studentNameInput.addEventListener('input', () => {
-            const name = studentNameInput.value.trim();
-            startBtn.disabled = !name || !currentQuestions;
-        });
-    }
-
-    if (startBtn) {
-        startBtn.addEventListener('click', () => {
-            studentName = studentNameInput.value.trim();
-            if (!studentName || !currentQuestions) {
-                debugLog('開始測驗失敗: 姓名或題庫未設置');
-                if (!studentName) alert('請輸入姓名');
-                else if (!currentQuestions || currentQuestions.length === 0) alert('請先匯入題庫');
-                return;
-            }
-
-            try {
-                startQuiz();
-            } catch (error) {
-                debugLog('開始測驗失敗: ' + error.message);
-                alert('開始測驗失敗，請稍後再試');
-            }
-        });
-    }
-
-    // 防止重新整理和重複作答
-    window.onbeforeunload = function() {
-        return "確定要離開測驗嗎？您的進度將會遺失。";
-    };
+// 開始測驗處理函數 - 單獨提取出來方便添加或移除事件監聽器
+function startQuizHandler() {
+    debugLog('開始測驗按鈕被點擊');
     
-    // 初始化完成
-    debugLog('測驗系統初始化完成');
-    
-    // 嘗試立即加載題庫
-    setTimeout(handleUploadBtnClick, 500);
+    try {
+        studentName = studentNameInput.value.trim();
+        if (!studentName) {
+            debugLog('開始測驗失敗: 未輸入姓名');
+            alert('請輸入姓名');
+            studentNameInput.focus();
+            return;
+        }
+        
+        if (!currentQuestions || currentQuestions.length === 0) {
+            debugLog('開始測驗失敗: 未選擇題庫或題庫為空');
+            alert('請先匯入並選擇題庫');
+            return;
+        }
+        
+        startQuiz();
+    } catch (error) {
+        debugLog('開始測驗失敗: ' + error.message);
+        console.error('開始測驗失敗:', error);
+        alert('開始測驗失敗: ' + error.message);
+    }
 }
 
 // 處理上傳按鈕點擊事件
@@ -569,299 +679,250 @@ function shuffleQuestions(questions) {
 
 // 顯示當前題目
 function showQuestion() {
-    const question = currentQuestions[currentQuestionIndex];
-    questionText.textContent = question.question;
-    optionsContainer.innerHTML = '';
-    
-    question.options.forEach((option, index) => {
-        const button = document.createElement('button');
-        button.className = 'option-btn';
-        button.textContent = option;
-        button.addEventListener('click', () => selectOption(index));
-        optionsContainer.appendChild(button);
-    });
-
-    nextBtn.disabled = true;
-    updateProgressBar();
+    try {
+        debugLog(`顯示第 ${currentQuestionIndex + 1} 題，共 ${currentQuestions.length} 題`);
+        
+        if (!currentQuestions || currentQuestionIndex >= currentQuestions.length) {
+            debugLog('找不到當前題目，可能已完成測驗');
+            showResult();
+            return;
+        }
+        
+        const question = currentQuestions[currentQuestionIndex];
+        
+        // 確保題目文本元素存在
+        if (!questionText) {
+            debugLog('找不到題目文本元素 question-text');
+            questionText = document.getElementById('question-text');
+            if (!questionText) {
+                throw new Error('找不到題目文本元素');
+            }
+        }
+        
+        // 確保選項容器元素存在
+        if (!optionsContainer) {
+            debugLog('找不到選項容器元素 options-container');
+            optionsContainer = document.getElementById('options-container');
+            if (!optionsContainer) {
+                throw new Error('找不到選項容器元素');
+            }
+        }
+        
+        // 設置題目文本
+        questionText.textContent = `${currentQuestionIndex + 1}. ${question.question}`;
+        
+        // 清空選項容器
+        optionsContainer.innerHTML = '';
+        
+        // 添加選項按鈕
+        question.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.className = 'option';
+            button.textContent = option;
+            button.addEventListener('click', () => selectOption(index));
+            optionsContainer.appendChild(button);
+        });
+        
+        // 更新進度條
+        updateProgressBar();
+        
+        debugLog('題目顯示成功');
+    } catch (error) {
+        debugLog('顯示題目時發生錯誤: ' + error.message);
+        console.error('顯示題目失敗:', error);
+        alert('顯示題目失敗: ' + error.message);
+    }
 }
 
 // 修改 selectOption 函數
 function selectOption(selectedIndex) {
-    const question = currentQuestions[currentQuestionIndex];
-    const buttons = optionsContainer.querySelectorAll('.option-btn');
-    
-    // 記錄選擇的答案
-    question.selectedAnswer = selectedIndex;
-    
-    // 停用所有按鈕
-    buttons.forEach(button => {
-        button.disabled = true;
-    });
-
-    // 記錄分數
-    if (selectedIndex === question.correct) {
-        score++;
-    }
-
-    // 直接進入下一題
-    setTimeout(() => {
-        currentQuestionIndex++;
-        if (currentQuestionIndex < currentQuestions.length) {
-            updateQuestion();
-        } else {
-            showResult();
+    try {
+        debugLog(`選擇選項: ${selectedIndex}`);
+        
+        if (!currentQuestions || currentQuestionIndex >= currentQuestions.length) {
+            debugLog('選擇選項時發現題目不存在');
+            return;
         }
-    }, 500); // 延遲 500ms 後進入下一題，讓用戶能看到自己的選擇
+        
+        const question = currentQuestions[currentQuestionIndex];
+        const buttons = optionsContainer.querySelectorAll('.option');
+        
+        // 記錄選擇的答案
+        question.selectedAnswer = selectedIndex;
+        
+        // 停用所有按鈕
+        buttons.forEach(button => {
+            button.disabled = true;
+        });
+        
+        // 標記選中的選項
+        buttons.forEach((button, index) => {
+            if (index === selectedIndex) {
+                button.classList.add('selected');
+                if (index === question.correct) {
+                    button.classList.add('correct');
+                    debugLog('答案正確');
+                } else {
+                    button.classList.add('incorrect');
+                    debugLog('答案錯誤');
+                }
+            } else if (index === question.correct) {
+                button.classList.add('correct');
+            }
+        });
+        
+        // 記錄分數
+        if (selectedIndex === question.correct) {
+            score++;
+        }
+        
+        // 等待一段時間後進入下一題
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }, 1000); // 延遲1秒，讓用戶看到答案
+    } catch (error) {
+        debugLog('選擇選項時發生錯誤: ' + error.message);
+        console.error('選擇選項失敗:', error);
+    }
 }
 
 // 更新進度條
 function updateProgressBar() {
-    const progress = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
-    document.querySelector('.progress').style.width = `${progress}%`;
-}
-
-// 修改 updateQuestion 函數
-function updateQuestion() {
-    if (currentQuestionIndex >= currentQuestions.length) {
-        showResult();
-        return;
+    try {
+        const progressBar = document.querySelector('.progress');
+        if (!progressBar) {
+            debugLog('找不到進度條元素');
+            return;
+        }
+        
+        const progress = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
+        progressBar.style.width = `${progress}%`;
+        debugLog(`更新進度條: ${progress.toFixed(0)}%`);
+    } catch (error) {
+        debugLog('更新進度條時發生錯誤: ' + error.message);
     }
-
-    const question = currentQuestions[currentQuestionIndex];
-    questionText.textContent = question.question;
-    optionsContainer.innerHTML = '';
-    
-    // 更新剩餘題數顯示
-    const remainingQuestions = currentQuestions.length - currentQuestionIndex;
-    const progressText = document.querySelector('.progress-text');
-    if (progressText) {
-        progressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
-    } else {
-        const newProgressText = document.createElement('div');
-        newProgressText.className = 'progress-text';
-        newProgressText.textContent = `剩餘題數：${remainingQuestions} / ${currentQuestions.length}`;
-        document.querySelector('.question-container').appendChild(newProgressText);
-    }
-    
-    question.options.forEach((option, index) => {
-        const button = document.createElement('button');
-        button.className = 'option-btn';
-        button.textContent = option;
-        button.addEventListener('click', () => selectOption(index));
-        optionsContainer.appendChild(button);
-    });
-
-    updateProgressBar();
 }
 
 // 顯示結果
 function showResult() {
-    endTime = new Date(); // 記錄結束時間
-    const duration = Math.floor((endTime - startTime) / 1000); // 計算測驗時間（秒）
-    const minutes = Math.floor(duration / 60);
-    const seconds = duration % 60;
-
-    quizScreen.classList.remove('active');
-    resultScreen.classList.add('active');
-
-    const finalScoreValue = Math.round((score / currentQuestions.length) * 100);
-    finalScore.textContent = finalScoreValue;
-    contributionScore.textContent = finalScoreValue;
-
-    // 顯示回饋
-    let feedbackText = '';
-    if (finalScoreValue >= 90) {
-        feedbackText = '太棒了！你的表現非常出色！請繼續保持！';
-    } else if (finalScoreValue >= 70) {
-        feedbackText = '做得不錯！還有進步空間，請繼續加油！';
-    } else if (finalScoreValue >= 50) {
-        feedbackText = '及格了！建議多複習一下，下次會更好！';
-    } else {
-        feedbackText = '需要多加努力！建議重新學習相關知識點。';
+    try {
+        debugLog('顯示測驗結果');
+        
+        // 記錄結束時間
+        endTime = new Date();
+        const duration = Math.floor((endTime - startTime) / 1000); // 秒
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        
+        debugLog(`測驗完成時間: ${minutes}分${seconds}秒，得分: ${score}/${currentQuestions.length}`);
+        
+        // 切換到結果畫面
+        startScreen.style.display = 'none';
+        quizScreen.style.display = 'none';
+        resultScreen.style.display = 'block';
+        
+        // 查找結果顯示元素
+        if (!finalScore) finalScore = document.getElementById('final-score');
+        if (!contributionScore) contributionScore = document.getElementById('contribution-score');
+        if (!feedback) feedback = document.getElementById('feedback');
+        if (!wrongQuestions) wrongQuestions = document.getElementById('wrong-questions');
+        
+        // 顯示學生姓名
+        const nameDisplay = document.getElementById('student-name-display');
+        if (nameDisplay) {
+            nameDisplay.textContent = studentName;
+        }
+        
+        // 計算並顯示分數
+        const finalScoreValue = Math.round((score / currentQuestions.length) * 100);
+        if (finalScore) finalScore.textContent = finalScoreValue;
+        if (contributionScore) contributionScore.textContent = finalScoreValue;
+        
+        // 顯示回饋信息
+        let feedbackText = '';
+        if (finalScoreValue >= 90) {
+            feedbackText = '太棒了！你的表現非常出色！請繼續保持！';
+        } else if (finalScoreValue >= 70) {
+            feedbackText = '做得不錯！還有進步空間，請繼續加油！';
+        } else if (finalScoreValue >= 50) {
+            feedbackText = '及格了！建議多複習一下，下次會更好！';
+        } else {
+            feedbackText = '需要多加努力！建議重新學習相關知識點。';
+        }
+        
+        if (feedback) feedback.textContent = feedbackText;
+        
+        // 顯示錯誤題目
+        if (wrongQuestions) {
+            const wrongQuestionsArray = currentQuestions.filter(q => q.selectedAnswer !== q.correct);
+            
+            if (wrongQuestionsArray.length === 0) {
+                wrongQuestions.innerHTML = '<h3>恭喜！您全部回答正確！</h3>';
+            } else {
+                wrongQuestions.innerHTML = `<h3>需要改進的題目（${wrongQuestionsArray.length}題）：</h3>`;
+                
+                wrongQuestionsArray.forEach(q => {
+                    const wrongItem = document.createElement('div');
+                    wrongItem.className = 'wrong-question-item';
+                    
+                    wrongItem.innerHTML = `
+                        <p class="wrong-question-text">${q.question}</p>
+                        <div class="wrong-question-options">
+                            <p class="wrong-option user-selected">您的答案：${q.options[q.selectedAnswer]}</p>
+                            <p class="wrong-option correct-answer">正確答案：${q.options[q.correct]}</p>
+                        </div>
+                    `;
+                    
+                    wrongQuestions.appendChild(wrongItem);
+                });
+            }
+        }
+        
+        // 設置保存結果按鈕
+        const saveButton = document.getElementById('save-result');
+        if (saveButton) {
+            saveButton.addEventListener('click', saveResultToImage);
+        }
+        
+        debugLog('結果顯示完成');
+    } catch (error) {
+        debugLog('顯示結果時發生錯誤: ' + error.message);
+        console.error('顯示結果失敗:', error);
+        alert('顯示結果失敗: ' + error.message);
     }
-    feedback.textContent = feedbackText;
-
-    // 只顯示錯誤題目的答案詳情
-    const wrongAnswersHTML = currentQuestions
-        .filter(q => q.correct !== q.selectedAnswer) // 只篩選錯誤的題目
-        .map((q, index) => {
-            return `
-                <div class="answer-item wrong">
-                    <h4>第 ${currentQuestions.indexOf(q) + 1} 題</h4>
-                    <p class="question">${q.question}</p>
-                    <div class="options">
-                        <div class="option wrong">
-                            您的答案：${q.options[q.selectedAnswer]}
-                        </div>
-                        <div class="option correct">
-                            正確答案：${q.options[q.correct]}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-    // 添加測驗信息到結果頁面
-    const resultInfo = document.createElement('div');
-    resultInfo.className = 'result-info';
-    resultInfo.innerHTML = `
-        <h2>測驗結果</h2>
-        <div class="test-info">
-            <p>姓名：${studentName}</p>
-            <p>題庫：${quizInfo.name}</p>
-            <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
-            <p>完成時間：${endTime.toLocaleTimeString('zh-TW')}</p>
-            <p>測驗時長：${minutes}分${seconds}秒</p>
-            <p>答對題數：${score} / ${currentQuestions.length}</p>
-        </div>
-    `;
-    resultScreen.insertBefore(resultInfo, resultScreen.firstChild);
-
-    const wrongCount = currentQuestions.filter(q => q.correct !== q.selectedAnswer).length;
-    wrongQuestions.innerHTML = wrongCount > 0 ? `
-        <h3>需要改進的題目（${wrongCount} 題）：</h3>
-        ${wrongAnswersHTML}
-    ` : '<h3>恭喜！您答對了所有題目！</h3>';
-
-    // 自動截圖
-    setTimeout(() => {
-        captureResult();
-    }, 1000);
 }
 
-// 截圖功能
-async function captureResult() {
+// 保存結果截圖功能
+function saveResultToImage() {
     try {
-        // 創建成績單容器
-        const resultContainer = document.createElement('div');
-        resultContainer.className = 'result-container';
-        resultContainer.innerHTML = `
-            <div class="result-header">
-                <h2>測驗成績單</h2>
-                <p>姓名：${studentName}</p>
-                <p>題庫：${quizInfo.name}</p>
-                <p>日期：${endTime.toLocaleDateString('zh-TW')}</p>
-                <p>完成時間：${endTime.toLocaleTimeString('zh-TW')}</p>
-                <p>測驗時長：${Math.floor((endTime - startTime) / 60000)}分${Math.floor(((endTime - startTime) % 60000) / 1000)}秒</p>
-                <p>答對題數：${score} / ${currentQuestions.length}</p>
-            </div>
-            <div class="result-content">
-                <div class="score-summary">
-                    <div class="score-box">
-                        <h3>得分</h3>
-                        <div class="score">${finalScore.textContent}</div>
-                        <div class="score-label">/ 100</div>
-                    </div>
-                    <div class="score-box">
-                        <h3>貢獻度</h3>
-                        <div class="score">${contributionScore.textContent}</div>
-                        <div class="score-label">%</div>
-                    </div>
-                </div>
-                <div class="feedback">${feedback.textContent}</div>
-                ${wrongQuestions.innerHTML}
-            </div>
-        `;
-
-        // 設定成績單樣式
-        const style = document.createElement('style');
-        style.textContent = `
-            .result-container {
-                background: white;
-                padding: 2rem;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-                max-width: 800px;
-                margin: 0 auto;
-                position: fixed;
-                top: -9999px;
-                left: -9999px;
-            }
-            .result-header {
-                text-align: center;
-                margin-bottom: 2rem;
-                padding-bottom: 1rem;
-                border-bottom: 2px solid #e2e8f0;
-            }
-            .result-header h2 {
-                color: #1e293b;
-                margin-bottom: 1rem;
-            }
-            .result-header p {
-                color: #64748b;
-                margin: 0.5rem 0;
-            }
-            .score-summary {
-                display: flex;
-                justify-content: center;
-                gap: 2rem;
-                margin-bottom: 2rem;
-            }
-            .score-box {
-                background: #f8fafc;
-                padding: 1.5rem;
-                border-radius: 12px;
-                min-width: 150px;
-            }
-            .score {
-                font-size: 3rem;
-                font-weight: bold;
-                color: #6366f1;
-                line-height: 1;
-            }
-            .score-label {
-                font-size: 1rem;
-                color: #64748b;
-            }
-            .feedback {
-                margin: 2rem 0;
-                padding: 1rem;
-                background: #f8fafc;
-                border-radius: 12px;
-                font-size: 1.1rem;
-            }
-            .wrong-questions {
-                margin: 2rem 0;
-                padding: 1.5rem;
-                background: #f8fafc;
-                border-radius: 12px;
-                text-align: left;
-            }
-            .wrong-question-item {
-                margin-bottom: 1rem;
-                padding: 1rem;
-                background: white;
-                border-radius: 12px;
-                border-left: 4px solid #ef4444;
-            }
-        `;
-
-        // 將成績單和樣式加入頁面
-        document.body.appendChild(style);
-        document.body.appendChild(resultContainer);
-
-        // 截圖
-        const canvas = await html2canvas(resultContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false
-        });
-
-        // 下載圖片
-        const link = document.createElement('a');
-        link.download = `${studentName}_${quizInfo.name}_測驗結果.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        // 清理臨時元素
-        document.body.removeChild(resultContainer);
-        document.body.removeChild(style);
-
-        // 顯示成功訊息
-        alert('成績單已自動下載！');
+        debugLog('開始截圖保存結果');
+        
+        // 使用html2canvas截圖
+        if (typeof html2canvas === 'function') {
+            html2canvas(document.querySelector('.section:last-child')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${studentName}_測驗結果.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                debugLog('結果截圖保存成功');
+            }).catch(error => {
+                debugLog('截圖失敗: ' + error.message);
+                alert('截圖失敗，請手動截圖保存');
+            });
+        } else {
+            debugLog('沒有找到html2canvas庫');
+            alert('保存功能需要html2canvas庫支持，請手動截圖保存');
+        }
     } catch (error) {
-        console.error('截圖失敗:', error);
-        alert('成績單生成失敗，請手動截圖。');
+        debugLog('保存結果時發生錯誤: ' + error.message);
+        console.error('保存結果失敗:', error);
+        alert('保存結果失敗，請手動截圖');
     }
 }
 
@@ -922,19 +983,29 @@ function startQuiz() {
     }
     
     try {
-        console.log('開始測驗...');
-        console.log('題庫信息:', quizInfo);
-        console.log('總題數:', currentQuestions.length);
+        debugLog('開始測驗...');
+        debugLog(`題庫信息: ${JSON.stringify(quizInfo || {})}`);
+        debugLog(`總題數: ${currentQuestions.length}`);
         
-        // 記錄開始時間
+        // 記錄學生姓名和開始時間
+        studentName = studentNameInput.value.trim();
         startTime = new Date();
+        
+        // 保存題庫信息（如果沒有，則創建一個默認的）
+        if (!quizInfo) {
+            debugLog('未找到題庫信息，創建默認題庫信息');
+            quizInfo = {
+                name: selectedQuizIndex >= 0 ? availableQuizzes[selectedQuizIndex].name : '未命名題庫',
+                description: selectedQuizIndex >= 0 ? availableQuizzes[selectedQuizIndex].description : '自動導入的題庫'
+            };
+        }
         
         // 打亂題目順序
         shuffleQuestions(currentQuestions);
         
         // 如果題目數量超過設定的最大題數，只取前N題
         if (currentQuestions.length > CONFIG.maxQuestionsPerQuiz) {
-            console.log(`題目數量(${currentQuestions.length})超過最大限制(${CONFIG.maxQuestionsPerQuiz})，將只使用前${CONFIG.maxQuestionsPerQuiz}題`);
+            debugLog(`題目數量(${currentQuestions.length})超過最大限制(${CONFIG.maxQuestionsPerQuiz})，將只使用前${CONFIG.maxQuestionsPerQuiz}題`);
             currentQuestions = currentQuestions.slice(0, CONFIG.maxQuestionsPerQuiz);
         }
         
@@ -942,59 +1013,21 @@ function startQuiz() {
         currentQuestionIndex = 0;
         score = 0;
         
-        // 切換到測驗畫面
-        startScreen.classList.remove('active');
-        quizScreen.classList.add('active');
+        // 切換到測驗畫面 - 使用display樣式
+        debugLog('切換到測驗畫面');
+        if (startScreen) startScreen.style.display = 'none';
+        if (quizScreen) quizScreen.style.display = 'block';
+        if (resultScreen) resultScreen.style.display = 'none';
         
         // 顯示第一個問題
         showQuestion();
         
-        console.log('測驗開始');
+        debugLog('測驗開始成功');
     } catch (error) {
+        debugLog('開始測驗時發生錯誤: ' + error.message);
         console.error('開始測驗時發生錯誤:', error);
         alert('開始測驗失敗: ' + error.message);
     }
-}
-
-// 添加 showScreen 函數
-function showScreen(screenName) {
-    // 隱藏所有畫面
-    startScreen.classList.remove('active');
-    quizScreen.classList.remove('active');
-    resultScreen.classList.remove('active');
-
-    // 顯示指定的畫面
-    switch (screenName) {
-        case 'start':
-            startScreen.classList.add('active');
-            break;
-        case 'quiz':
-            quizScreen.classList.add('active');
-            break;
-        case 'result':
-            resultScreen.classList.add('active');
-            break;
-    }
-}
-
-// 修改 startTimer 函數
-function startTimer() {
-    const timerDisplay = document.createElement('div');
-    timerDisplay.className = 'timer';
-    timerDisplay.textContent = timeLeft;
-    document.querySelector('.question-container').appendChild(timerDisplay);
-
-    const timer = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = timeLeft;
-
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            timerDisplay.remove();
-            nextBtn.disabled = false;
-            selectOption(-1); // 超時自動選擇
-        }
-    }, 1000);
 }
 
 // 解析 CSV 檔案
@@ -1021,4 +1054,45 @@ function parseCSV(csvData) {
     }
     
     return questions;
-} 
+}
+
+// 修改原來的調試日誌函數，以便與新調試容器配合
+window.debugLog = function(message) {
+    console.log(message);
+    
+    const debugInfo = document.getElementById('debug-info');
+    if (debugInfo) {
+        const logContainer = debugInfo.querySelector('.log-container') || debugInfo;
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.style.borderBottom = '1px dotted #333';
+        logEntry.style.padding = '4px 0';
+        
+        const timestamp = document.createElement('span');
+        timestamp.className = 'log-time';
+        timestamp.textContent = `[${new Date().toLocaleTimeString()}] `;
+        timestamp.style.color = '#888';
+        timestamp.style.marginRight = '8px';
+        
+        const msgContent = document.createElement('span');
+        msgContent.className = 'log-msg';
+        msgContent.textContent = message;
+        
+        logEntry.appendChild(timestamp);
+        logEntry.appendChild(msgContent);
+        logContainer.appendChild(logEntry);
+        
+        // 限制日誌數量
+        const maxEntries = 100;
+        const entries = logContainer.querySelectorAll('.log-entry');
+        if (entries.length > maxEntries) {
+            for (let i = 0; i < entries.length - maxEntries; i++) {
+                logContainer.removeChild(entries[i]);
+            }
+        }
+        
+        // 自動滾動到底部
+        debugInfo.scrollTop = debugInfo.scrollHeight;
+    }
+}; 
