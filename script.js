@@ -250,7 +250,12 @@ async function loadAvailableQuizzes() {
             "quiz_1.json",
             "questions_2.json",
             "test_3.json",
-            "exam_4.json"
+            "exam_4.json",
+            "island_optimization_quiz.json",
+            "thermal_barker_quiz_en.json",
+            "thermal_barker_quiz.json",
+            "Lou_lagging.json",
+            "Tsai_island.json"
         ];
         
         // 如果是本地開發環境，使用內嵌的題庫列表
@@ -289,7 +294,7 @@ async function loadAvailableQuizzes() {
         availableQuizzes = [];
         debugLog('開始自動探測questions目錄中的JSON文件');
         
-        // 先檢查預設的題庫文件
+        // 檢查預設的題庫文件
         for (const file of possibleQuizFiles) {
             try {
                 const cacheParam = CONFIG.noCacheParam || '';
@@ -320,36 +325,6 @@ async function loadAvailableQuizzes() {
             } catch (error) {
                 debugLog(`檢查題庫文件 ${file} 時出錯: ${error.message}`);
             }
-        }
-        
-        // 嘗試加載quiz_list.json作為補充
-        try {
-            const cacheParam = CONFIG.noCacheParam || '';
-            const quizListUrl = CONFIG.questionsPath + 'quiz_list.json' + cacheParam;
-            debugLog('從quiz_list.json載入題庫列表: ' + quizListUrl);
-            
-            const response = await fetch(quizListUrl, {
-                cache: 'no-store' // 禁用緩存
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.quizzes && Array.isArray(data.quizzes)) {
-                    debugLog('從quiz_list.json找到題庫列表: ' + data.quizzes.length + '個題庫');
-                    
-                    // 合併題庫，避免重複添加
-                    for (const quiz of data.quizzes) {
-                        if (!availableQuizzes.some(q => q.file === quiz.file)) {
-                            availableQuizzes.push(quiz);
-                            debugLog(`從quiz_list.json添加題庫: ${quiz.name}`);
-                        }
-                    }
-                }
-            } else {
-                debugLog('quiz_list.json不存在或無法訪問: ' + response.status);
-            }
-        } catch (error) {
-            debugLog('從quiz_list.json載入失敗: ' + error.message);
         }
         
         debugLog('最終探測到的題庫列表: ' + availableQuizzes.length + '個題庫');
