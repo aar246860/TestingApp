@@ -1,0 +1,153 @@
+{
+    "info": {
+        "name": "計算機科學基礎",
+        "description": "測試您對計算機科學和程式設計的基本理解",
+        "version": "1.0"
+    },
+    "questions": [
+        {
+            "id": 1,
+            "question": "在計算機科學中，「算法」是指什麼？",
+            "options": [
+                "數學公式",
+                "解決問題的一系列步驟",
+                "計算機硬件",
+                "程式語言"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 2,
+            "question": "下列哪種不是程式語言？",
+            "options": [
+                "Java",
+                "Python",
+                "HTML",
+                "Microsoft Word"
+            ],
+            "correct": 3,
+            "weight": 1
+        },
+        {
+            "id": 3,
+            "question": "什麼是「變數」？",
+            "options": [
+                "程式的錯誤",
+                "存儲數據的容器",
+                "計算機組件",
+                "網絡協議"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 4,
+            "question": "二進制數字系統只使用哪兩個數字？",
+            "options": [
+                "0和1",
+                "1和2",
+                "真和假",
+                "正和負"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 5,
+            "question": "下列哪個不是基本的數據結構？",
+            "options": [
+                "陣列",
+                "鏈表",
+                "USB驅動器",
+                "堆疊"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 6,
+            "question": "什麼是「迴圈」？",
+            "options": [
+                "計算機的電源按鈕",
+                "一種錯誤",
+                "重複執行代碼的結構",
+                "保存程式的地方"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 7,
+            "question": "RAM是什麼的縮寫？",
+            "options": [
+                "Random Access Memory",
+                "Read Always Memory",
+                "Remote Access Module",
+                "Runtime Application Management"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 8,
+            "question": "哪種數據類型用於存儲文本？",
+            "options": [
+                "Integer",
+                "Boolean",
+                "String",
+                "Float"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 9,
+            "question": "什麼是「調試」(Debugging)？",
+            "options": [
+                "創建程式",
+                "移除程式中的錯誤",
+                "優化程式的運行速度",
+                "加密程式代碼"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 10,
+            "question": "「開源軟件」的主要特點是什麼？",
+            "options": [
+                "免費使用",
+                "只能在Windows上運行",
+                "源代碼可供查看和修改",
+                "運行速度快"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 11,
+            "question": "什麼是API？",
+            "options": [
+                "一種程式語言",
+                "應用程式編程接口",
+                "自動程式安裝",
+                "高級編程指令"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 12,
+            "question": "什麼是SQL？",
+            "options": [
+                "一種程式語言",
+                "計算機硬件",
+                "結構化查詢語言",
+                "安全質量許可"
+            ],
+            "correct": 2,
+            "weight": 1
+        }
+    ]
+} 

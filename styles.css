@@ -750,32 +750,53 @@ h2 {
 }
 
 .quiz-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin: 1rem 0;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .quiz-option {
-    padding: 1rem;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
+    padding: 12px 15px;
+    border: none;
+    background: #6c5ce7;
+    color: white;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1.1rem;
-    color: #1e293b;
+    font-size: 16px;
+    transition: all 0.3s;
+    text-align: left;
+    border: 2px solid transparent;
 }
 
-.quiz-option:hover {
-    background: #e2e8f0;
+.quiz-option:hover, .quiz-option.selected {
+    background: #5048b5;
+    border-color: #8677f0;
     transform: translateY(-2px);
 }
 
-.quiz-option.selected {
-    background: #e0e7ff;
-    border-color: #6366f1;
-    color: #4f46e5;
+/* 確保滾動條樣式在所有瀏覽器上都好看 */
+.quiz-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.quiz-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.quiz-list::-webkit-scrollbar-thumb {
+    background: #6c5ce7;
+    border-radius: 10px;
+}
+
+.quiz-list::-webkit-scrollbar-thumb:hover {
+    background: #5048b5;
 }
 
 /* 輸入區域 */

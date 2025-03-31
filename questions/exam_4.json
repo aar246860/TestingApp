@@ -1,0 +1,189 @@
+{
+    "info": {
+        "name": "數學基本概念測驗",
+        "description": "檢測您對數學各領域基礎知識的掌握程度",
+        "version": "1.0"
+    },
+    "questions": [
+        {
+            "id": 1,
+            "question": "代數中，方程 3x + 5 = 20 的解為：",
+            "options": [
+                "x = 5",
+                "x = 7",
+                "x = 3",
+                "x = 8"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 2,
+            "question": "下列哪個不是質數？",
+            "options": [
+                "13",
+                "17",
+                "21",
+                "23"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 3,
+            "question": "計算 √144 的值為：",
+            "options": [
+                "10",
+                "12",
+                "14",
+                "16"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 4,
+            "question": "圓的面積公式是：",
+            "options": [
+                "A = πr",
+                "A = 2πr",
+                "A = πr²",
+                "A = πd"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 5,
+            "question": "如果三角形的三個角分別為30°、60°和90°，這是什麼類型的三角形？",
+            "options": [
+                "等邊三角形",
+                "等腰三角形",
+                "直角三角形",
+                "鈍角三角形"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 6,
+            "question": "集合論中，A∩B表示：",
+            "options": [
+                "集合A和集合B的並集",
+                "集合A和集合B的交集",
+                "集合A相對於集合B的補集",
+                "集合A的子集"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 7,
+            "question": "函數f(x) = x²的導數是：",
+            "options": [
+                "f'(x) = 2x",
+                "f'(x) = x",
+                "f'(x) = 2",
+                "f'(x) = x²"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 8,
+            "question": "如果log₁₀(100) = 2，則log₁₀(1000)等於：",
+            "options": [
+                "3",
+                "4",
+                "6",
+                "10"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 9,
+            "question": "平行四邊形的對角線：",
+            "options": [
+                "總是相等",
+                "總是垂直相交",
+                "互相平分",
+                "總是形成四個等角"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 10,
+            "question": "矩陣A和矩陣B相乘，要求：",
+            "options": [
+                "A和B必須是方陣",
+                "A的列數等於B的行數",
+                "A的行數等於B的列數",
+                "A和B的元素數量相同"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 11,
+            "question": "機率論中，兩個互斥事件A和B的並集機率P(A∪B)等於：",
+            "options": [
+                "P(A) + P(B)",
+                "P(A) + P(B) - P(A∩B)",
+                "P(A) × P(B)",
+                "P(A) - P(B)"
+            ],
+            "correct": 0,
+            "weight": 1
+        },
+        {
+            "id": 12,
+            "question": "複數i²的值為：",
+            "options": [
+                "i",
+                "-1",
+                "1",
+                "0"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 13,
+            "question": "三角函數中，sin²θ + cos²θ等於：",
+            "options": [
+                "0",
+                "1",
+                "2",
+                "依θ值而定"
+            ],
+            "correct": 1,
+            "weight": 1
+        },
+        {
+            "id": 14,
+            "question": "積分∫x dx的結果是：",
+            "options": [
+                "x + C",
+                "x² + C",
+                "x²/2 + C",
+                "ln|x| + C"
+            ],
+            "correct": 2,
+            "weight": 1
+        },
+        {
+            "id": 15,
+            "question": "向量a和b的點積（內積）是：",
+            "options": [
+                "向量",
+                "純量（數）",
+                "矩陣",
+                "無定義"
+            ],
+            "correct": 1,
+            "weight": 1
+        }
+    ]
+} 
