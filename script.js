@@ -149,11 +149,15 @@ async function loadAvailableQuizzes() {
         console.log('當前路徑:', CONFIG.questionsPath);
         console.log('是否本地開發:', CONFIG.isLocalDevelopment);
         
-        // 預設的題庫文件名列表（用於本地開發和備用方案）
+        // 預設的題庫文件名列表（確保原有題庫文件被包含）
         const possibleQuizFiles = [
             "final_island_questions.json",
             "barker1988_questions_complete_corrected.json",
-            "lagging_model_questions_complete.json"
+            "lagging_model_questions_complete.json",
+            "quiz_1.json",
+            "questions_2.json",
+            "test_3.json",
+            "exam_4.json"
         ];
         
         // 如果是本地開發環境，使用內嵌的題庫列表
@@ -190,65 +194,61 @@ async function loadAvailableQuizzes() {
         
         // 自動探測題庫文件
         availableQuizzes = [];
+        console.log('開始自動探測questions目錄中的JSON文件');
         
-        // 首先嘗試從quiz_list.json加載，如果存在的話
-        try {
-            const quizListUrl = CONFIG.questionsPath + 'quiz_list.json';
-            console.log('嘗試從quiz_list.json載入題庫列表:', quizListUrl);
-            
-            const response = await fetch(quizListUrl);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.quizzes && Array.isArray(data.quizzes)) {
-                    console.log('成功從quiz_list.json載入題庫列表:', data.quizzes);
-                    availableQuizzes = data.quizzes;
+        // 先檢查預設的題庫文件
+        for (const file of possibleQuizFiles) {
+            try {
+                const response = await fetch(CONFIG.questionsPath + file);
+                if (response.ok) {
+                    try {
+                        const quizData = await response.json();
+                        if (quizData && quizData.questions) {
+                            availableQuizzes.push({
+                                name: quizData.info?.name || file.replace(/_/g, ' ').replace('.json', ''),
+                                file: file,
+                                description: quizData.info?.description || '自動探測的題庫'
+                            });
+                            console.log(`發現題庫文件: ${file}`);
+                        }
+                    } catch (parseError) {
+                        console.log(`題庫文件 ${file} 格式無效:`, parseError);
+                    }
                 }
+            } catch (error) {
+                console.log(`檢查題庫文件 ${file} 時出錯:`, error);
             }
-        } catch (error) {
-            console.log('從quiz_list.json載入失敗，將自動探測題庫文件:', error);
         }
-
-        // 如果沒有從quiz_list.json找到題庫，則自動探測
-        if (availableQuizzes.length === 0) {
-            console.log('開始自動探測questions目錄中的JSON文件');
+        
+        // 嘗試尋找更多題庫文件（通過命名模式）
+        const filePatterns = [
+            "questions_*.json", 
+            "quiz_*.json", 
+            "test_*.json", 
+            "exam_*.json"
+        ];
+        
+        // 嘗試使用通配符數字來探測更多文件
+        for (let i = 1; i <= 20; i++) {
+            const potentialFiles = [
+                `questions_${i}.json`,
+                `quiz_${i}.json`,
+                `test_${i}.json`,
+                `exam_${i}.json`
+            ];
             
-            // 先檢查預設的題庫文件
-            for (const file of possibleQuizFiles) {
+            for (const file of potentialFiles) {
+                // 檢查是否已經添加過這個文件
+                if (availableQuizzes.some(q => q.file === file)) {
+                    continue;
+                }
+                
                 try {
                     const response = await fetch(CONFIG.questionsPath + file);
                     if (response.ok) {
-                        const quizData = await response.json();
-                        availableQuizzes.push({
-                            name: quizData.info?.name || file.replace(/_/g, ' ').replace('.json', ''),
-                            file: file,
-                            description: quizData.info?.description || '自動探測的題庫'
-                        });
-                        console.log(`發現題庫文件: ${file}`);
-                    }
-                } catch (error) {
-                    console.log(`檢查題庫文件 ${file} 時出錯:`, error);
-                }
-            }
-            
-            // 嘗試尋找帶有_questions.json或questions_的文件模式
-            const questionsFilePattern = /_questions\.json|questions_/;
-            
-            // 使用fetch探測可能存在的題庫文件（通過命名模式）
-            for (let i = 1; i <= 20; i++) {
-                const potentialFiles = [
-                    `questions_${i}.json`,
-                    `quiz_${i}.json`,
-                    `test_${i}.json`,
-                    `exam_${i}.json`
-                ];
-                
-                for (const file of potentialFiles) {
-                    try {
-                        const response = await fetch(CONFIG.questionsPath + file);
-                        if (response.ok) {
+                        try {
                             const quizData = await response.json();
-                            // 避免重複添加
-                            if (!availableQuizzes.some(q => q.file === file)) {
+                            if (quizData && quizData.questions) {
                                 availableQuizzes.push({
                                     name: quizData.info?.name || file.replace(/_/g, ' ').replace('.json', ''),
                                     file: file,
@@ -256,12 +256,38 @@ async function loadAvailableQuizzes() {
                                 });
                                 console.log(`發現題庫文件: ${file}`);
                             }
+                        } catch (parseError) {
+                            console.log(`題庫文件 ${file} 格式無效:`, parseError);
                         }
-                    } catch (error) {
-                        // 靜默失敗，因為我們只是在嘗試探測可能的文件
+                    }
+                } catch (error) {
+                    // 靜默失敗，因為我們只是在嘗試探測可能的文件
+                }
+            }
+        }
+        
+        // 嘗試加載quiz_list.json作為補充（不再優先，只作為補充）
+        try {
+            const quizListUrl = CONFIG.questionsPath + 'quiz_list.json';
+            console.log('補充方式從quiz_list.json載入題庫列表:', quizListUrl);
+            
+            const response = await fetch(quizListUrl);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.quizzes && Array.isArray(data.quizzes)) {
+                    console.log('從quiz_list.json找到題庫列表:', data.quizzes);
+                    
+                    // 合併題庫，避免重複添加
+                    for (const quiz of data.quizzes) {
+                        if (!availableQuizzes.some(q => q.file === quiz.file)) {
+                            availableQuizzes.push(quiz);
+                            console.log(`從quiz_list.json添加題庫: ${quiz.name}`);
+                        }
                     }
                 }
             }
+        } catch (error) {
+            console.log('從quiz_list.json載入失敗（非關鍵錯誤）:', error);
         }
         
         console.log('最終探測到的題庫列表:', availableQuizzes);
