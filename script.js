@@ -42,98 +42,13 @@ let quizList;  // 明確定義quizList變量
 
 // 等待DOM完全加載後初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 首先立即創建或準備調試容器
-    let debugInfo = document.getElementById('debug-info');
-    if (!debugInfo) {
-        debugInfo = document.createElement('div');
-        debugInfo.id = 'debug-info';
-        debugInfo.style.display = 'block';
-        debugInfo.style.position = 'fixed';
-        debugInfo.style.bottom = '0';
-        debugInfo.style.right = '0';
-        debugInfo.style.width = '400px';
-        debugInfo.style.maxHeight = '300px';
-        debugInfo.style.overflow = 'auto';
-        debugInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        debugInfo.style.color = '#00FF00';
-        debugInfo.style.fontFamily = 'monospace';
-        debugInfo.style.fontSize = '12px';
-        debugInfo.style.padding = '10px';
-        debugInfo.style.zIndex = '9999';
-        debugInfo.style.borderTop = '1px solid #00FF00';
-        debugInfo.style.borderLeft = '1px solid #00FF00';
-        
-        const debugTitle = document.createElement('h3');
-        debugTitle.textContent = '調試信息 (Debug Info)';
-        debugTitle.style.margin = '0 0 10px 0';
-        debugTitle.style.borderBottom = '1px solid #00FF00';
-        debugTitle.style.paddingBottom = '5px';
-        debugInfo.appendChild(debugTitle);
-        
-        // 添加一個操作按鈕區
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.marginBottom = '10px';
-        
-        // 添加清除按鈕
-        const clearButton = document.createElement('button');
-        clearButton.textContent = '清除日誌';
-        clearButton.style.backgroundColor = '#333';
-        clearButton.style.color = '#00FF00';
-        clearButton.style.border = '1px solid #00FF00';
-        clearButton.style.marginRight = '10px';
-        clearButton.style.padding = '3px 8px';
-        clearButton.style.cursor = 'pointer';
-        clearButton.onclick = function() {
-            const logEntries = debugInfo.querySelectorAll('.log-entry');
-            logEntries.forEach(entry => entry.remove());
-        };
-        buttonContainer.appendChild(clearButton);
-        
-        // 添加隱藏按鈕
-        const hideButton = document.createElement('button');
-        hideButton.textContent = '隱藏日誌';
-        hideButton.style.backgroundColor = '#333';
-        hideButton.style.color = '#00FF00';
-        hideButton.style.border = '1px solid #00FF00';
-        hideButton.style.padding = '3px 8px';
-        hideButton.style.cursor = 'pointer';
-        hideButton.onclick = function() {
-            debugInfo.style.display = 'none';
-            
-            // 添加一個小按鈕用於重新顯示
-            const showButton = document.createElement('button');
-            showButton.textContent = 'DEBUG';
-            showButton.style.position = 'fixed';
-            showButton.style.bottom = '0';
-            showButton.style.right = '0';
-            showButton.style.backgroundColor = '#333';
-            showButton.style.color = '#00FF00';
-            showButton.style.border = '1px solid #00FF00';
-            showButton.style.padding = '3px 8px';
-            showButton.style.cursor = 'pointer';
-            showButton.style.zIndex = '9999';
-            showButton.onclick = function() {
-                debugInfo.style.display = 'block';
-                document.body.removeChild(showButton);
-            };
-            document.body.appendChild(showButton);
-        };
-        buttonContainer.appendChild(hideButton);
-        
-        debugInfo.appendChild(buttonContainer);
-        
-        // 創建日誌容器
-        const logContainer = document.createElement('div');
-        logContainer.className = 'log-container';
-        debugInfo.appendChild(logContainer);
-        
-        document.body.appendChild(debugInfo);
-    } else {
-        // 確保調試容器可見
-        debugInfo.style.display = 'block';
+    // 隱藏調試信息區域（根據用戶需求移除）
+    const debugInfo = document.getElementById('debug-info');
+    if (debugInfo) {
+        debugInfo.style.display = 'none';
     }
     
-    // 現在加載主應用程序
+    // 初始化應用程序
     initializeApp();
 });
 
@@ -737,56 +652,32 @@ function showQuestion() {
 // 修改 selectOption 函數
 function selectOption(selectedIndex) {
     try {
-        debugLog(`選擇選項: ${selectedIndex}`);
+        // 不顯示調試信息
+        //debugLog(`選擇選項: ${selectedIndex}`);
         
         if (!currentQuestions || currentQuestionIndex >= currentQuestions.length) {
-            debugLog('選擇選項時發現題目不存在');
+            //debugLog('選擇選項時發現題目不存在');
             return;
         }
         
         const question = currentQuestions[currentQuestionIndex];
-        const buttons = optionsContainer.querySelectorAll('.option');
         
         // 記錄選擇的答案
         question.selectedAnswer = selectedIndex;
         
-        // 停用所有按鈕
-        buttons.forEach(button => {
-            button.disabled = true;
-        });
-        
-        // 標記選中的選項
-        buttons.forEach((button, index) => {
-            if (index === selectedIndex) {
-                button.classList.add('selected');
-                if (index === question.correct) {
-                    button.classList.add('correct');
-                    debugLog('答案正確');
-                } else {
-                    button.classList.add('incorrect');
-                    debugLog('答案錯誤');
-                }
-            } else if (index === question.correct) {
-                button.classList.add('correct');
-            }
-        });
-        
-        // 記錄分數
+        // 記錄分數（但不顯示對錯）
         if (selectedIndex === question.correct) {
             score++;
         }
         
-        // 等待一段時間後進入下一題
-        setTimeout(() => {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < currentQuestions.length) {
-                showQuestion();
-            } else {
-                showResult();
-            }
-        }, 1000); // 延遲1秒，讓用戶看到答案
+        // 直接進入下一題，不顯示對錯，不延遲
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuestions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
     } catch (error) {
-        debugLog('選擇選項時發生錯誤: ' + error.message);
         console.error('選擇選項失敗:', error);
     }
 }
@@ -811,7 +702,7 @@ function updateProgressBar() {
 // 顯示結果
 function showResult() {
     try {
-        debugLog('顯示測驗結果');
+        //debugLog('顯示測驗結果');
         
         // 記錄結束時間
         endTime = new Date();
@@ -819,7 +710,7 @@ function showResult() {
         const minutes = Math.floor(duration / 60);
         const seconds = duration % 60;
         
-        debugLog(`測驗完成時間: ${minutes}分${seconds}秒，得分: ${score}/${currentQuestions.length}`);
+        //debugLog(`測驗完成時間: ${minutes}分${seconds}秒，得分: ${score}/${currentQuestions.length}`);
         
         // 切換到結果畫面
         startScreen.style.display = 'none';
@@ -883,15 +774,13 @@ function showResult() {
             }
         }
         
-        // 設置保存結果按鈕
-        const saveButton = document.getElementById('save-result');
-        if (saveButton) {
-            saveButton.addEventListener('click', saveResultToImage);
-        }
+        // 自動截圖
+        setTimeout(() => {
+            saveResultToImage();
+        }, 1000);
         
-        debugLog('結果顯示完成');
+        //debugLog('結果顯示完成');
     } catch (error) {
-        debugLog('顯示結果時發生錯誤: ' + error.message);
         console.error('顯示結果失敗:', error);
         alert('顯示結果失敗: ' + error.message);
     }
@@ -900,27 +789,148 @@ function showResult() {
 // 保存結果截圖功能
 function saveResultToImage() {
     try {
-        debugLog('開始截圖保存結果');
-        
         // 使用html2canvas截圖
         if (typeof html2canvas === 'function') {
-            html2canvas(document.querySelector('.section:last-child')).then(canvas => {
+            // 創建一個包含更多信息的結果容器
+            const resultContainer = document.createElement('div');
+            resultContainer.className = 'result-container';
+            resultContainer.style.backgroundColor = 'white';
+            resultContainer.style.padding = '20px';
+            resultContainer.style.borderRadius = '10px';
+            resultContainer.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.1)';
+            resultContainer.style.maxWidth = '800px';
+            resultContainer.style.margin = '0 auto';
+            resultContainer.style.fontFamily = 'Arial, sans-serif';
+            
+            // 添加測驗信息
+            const quizInfo = document.createElement('div');
+            quizInfo.style.textAlign = 'center';
+            quizInfo.style.marginBottom = '20px';
+            quizInfo.style.borderBottom = '2px solid #e9ecef';
+            quizInfo.style.paddingBottom = '15px';
+            
+            const title = document.createElement('h2');
+            title.textContent = '測驗成績單';
+            title.style.color = '#6c5ce7';
+            title.style.marginBottom = '15px';
+            quizInfo.appendChild(title);
+            
+            const quizName = selectedQuizIndex >= 0 ? availableQuizzes[selectedQuizIndex].name : '未命名題庫';
+            
+            const infoText = document.createElement('div');
+            infoText.innerHTML = `
+                <p><strong>姓名：</strong>${studentName}</p>
+                <p><strong>題庫：</strong>${quizName}</p>
+                <p><strong>日期：</strong>${endTime.toLocaleDateString('zh-TW')}</p>
+                <p><strong>完成時間：</strong>${endTime.toLocaleTimeString('zh-TW')}</p>
+                <p><strong>測驗時長：</strong>${Math.floor((endTime - startTime) / 60000)}分${Math.floor(((endTime - startTime) % 60000) / 1000)}秒</p>
+                <p><strong>答對題數：</strong>${score} / ${currentQuestions.length}</p>
+            `;
+            infoText.style.color = '#333';
+            infoText.style.fontSize = '14px';
+            quizInfo.appendChild(infoText);
+            
+            resultContainer.appendChild(quizInfo);
+            
+            // 添加分數信息
+            const scoreSection = document.createElement('div');
+            scoreSection.style.display = 'flex';
+            scoreSection.style.justifyContent = 'center';
+            scoreSection.style.gap = '40px';
+            scoreSection.style.marginBottom = '20px';
+            
+            // 得分框
+            const scoreBox = document.createElement('div');
+            scoreBox.style.textAlign = 'center';
+            scoreBox.style.backgroundColor = '#f8f9fa';
+            scoreBox.style.padding = '20px';
+            scoreBox.style.borderRadius = '10px';
+            scoreBox.style.minWidth = '120px';
+            
+            const scoreTitle = document.createElement('h3');
+            scoreTitle.textContent = '得分';
+            scoreTitle.style.color = '#6c5ce7';
+            scoreTitle.style.margin = '0 0 10px 0';
+            scoreBox.appendChild(scoreTitle);
+            
+            const scoreValue = document.createElement('div');
+            scoreValue.textContent = Math.round((score / currentQuestions.length) * 100);
+            scoreValue.style.fontSize = '48px';
+            scoreValue.style.fontWeight = 'bold';
+            scoreValue.style.color = '#6c5ce7';
+            scoreBox.appendChild(scoreValue);
+            
+            const scoreLabel = document.createElement('div');
+            scoreLabel.textContent = '/ 100';
+            scoreLabel.style.color = '#6c757d';
+            scoreBox.appendChild(scoreLabel);
+            
+            scoreSection.appendChild(scoreBox);
+            
+            resultContainer.appendChild(scoreSection);
+            
+            // 添加回饋
+            const feedbackSection = document.createElement('div');
+            feedbackSection.style.marginBottom = '20px';
+            feedbackSection.style.backgroundColor = '#f8f9fa';
+            feedbackSection.style.padding = '15px';
+            feedbackSection.style.borderRadius = '10px';
+            feedbackSection.style.textAlign = 'center';
+            
+            const feedbackContent = document.createElement('p');
+            feedbackContent.textContent = feedback.textContent;
+            feedbackContent.style.margin = '0';
+            feedbackContent.style.fontSize = '16px';
+            feedbackContent.style.color = '#333';
+            feedbackSection.appendChild(feedbackContent);
+            
+            resultContainer.appendChild(feedbackSection);
+            
+            // 添加錯誤題目
+            if (wrongQuestions.children.length > 0) {
+                const wrongSection = document.createElement('div');
+                wrongSection.style.backgroundColor = '#f8f9fa';
+                wrongSection.style.padding = '15px';
+                wrongSection.style.borderRadius = '10px';
+                
+                // 克隆錯誤題目內容
+                const wrongContent = wrongQuestions.cloneNode(true);
+                wrongSection.appendChild(wrongContent);
+                
+                resultContainer.appendChild(wrongSection);
+            }
+            
+            // 添加到DOM但隱藏
+            resultContainer.style.position = 'absolute';
+            resultContainer.style.left = '-9999px';
+            document.body.appendChild(resultContainer);
+            
+            // 截圖
+            html2canvas(resultContainer, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: 'white'
+            }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `${studentName}_測驗結果.png`;
+                link.download = `${studentName}_${quizName}_測驗結果.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 
-                debugLog('結果截圖保存成功');
+                // 移除臨時容器
+                document.body.removeChild(resultContainer);
+                
+                // 顯示成功訊息
+                alert('成績單已自動下載！');
             }).catch(error => {
-                debugLog('截圖失敗: ' + error.message);
+                console.error('截圖失敗:', error);
                 alert('截圖失敗，請手動截圖保存');
+                document.body.removeChild(resultContainer);
             });
         } else {
-            debugLog('沒有找到html2canvas庫');
             alert('保存功能需要html2canvas庫支持，請手動截圖保存');
         }
     } catch (error) {
-        debugLog('保存結果時發生錯誤: ' + error.message);
         console.error('保存結果失敗:', error);
         alert('保存結果失敗，請手動截圖');
     }
