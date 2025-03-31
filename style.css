@@ -1,0 +1,262 @@
+/* 重置樣式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #f5f6fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #6c5ce7;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+}
+
+h2 {
+    color: #6c5ce7;
+    margin-bottom: 20px;
+}
+
+h3 {
+    color: #6c5ce7;
+    margin-bottom: 15px;
+}
+
+.section {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.instructions {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.btn {
+    background-color: #6c5ce7;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background-color: #5a4ecc;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 題庫列表樣式 */
+.quiz-list {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+}
+
+.quiz-button {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px 15px;
+    margin: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quiz-button:hover {
+    background-color: #a29bfe;
+    color: white;
+}
+
+/* 題庫信息樣式 */
+.quiz-info {
+    margin-top: 20px;
+    display: none;
+}
+
+/* 測驗畫面樣式 */
+.progress-bar {
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background-color: #6c5ce7;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.question-section {
+    margin-bottom: 20px;
+}
+
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.option {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.option:hover {
+    background-color: #f1f1ff;
+}
+
+.option.selected {
+    background-color: #a29bfe;
+    color: white;
+    border-color: #6c5ce7;
+}
+
+.option.correct {
+    background-color: #55efc4;
+    color: #2d3436;
+    border-color: #00b894;
+}
+
+.option.incorrect {
+    background-color: #ff7675;
+    color: white;
+    border-color: #d63031;
+}
+
+/* 結果畫面樣式 */
+.result-details {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.result-details p {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.result-details span {
+    font-weight: bold;
+    color: #6c5ce7;
+}
+
+.wrong-questions {
+    margin-top: 30px;
+}
+
+.wrong-question-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border-left: 5px solid #ff7675;
+}
+
+.wrong-question-text {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.wrong-question-options {
+    margin-left: 20px;
+}
+
+.wrong-option {
+    margin-bottom: 5px;
+}
+
+.wrong-option.user-selected {
+    color: #d63031;
+    text-decoration: line-through;
+}
+
+.wrong-option.correct-answer {
+    color: #00b894;
+    font-weight: bold;
+}
+
+/* 調試信息樣式 */
+#debug-info {
+    font-family: monospace;
+    line-height: 1.4;
+}
+
+#debug-info div {
+    border-bottom: 1px dotted #ddd;
+    padding: 3px 0;
+}
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .section {
+        padding: 20px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    #debug-info {
+        width: 100% !important;
+        max-height: 200px !important;
+    }
+} 

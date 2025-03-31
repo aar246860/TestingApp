@@ -4,59 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>測驗系統</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- 開始畫面 -->
-        <div id="start-screen" class="screen active">
-            <h1>測驗系統</h1>
+        <h1>線上測驗系統</h1>
+        <div id="start-screen" class="section">
+            <div class="instructions">
+                <h2>歡迎參加測驗</h2>
+                <p>請輸入您的姓名，選擇題庫後開始測驗</p>
+            </div>
             <div class="input-group">
-                <input type="text" id="student-name" placeholder="請輸入姓名" required>
-                <div class="file-upload">
-                    <input type="file" id="questionFile" accept=".json" style="display: none;">
-                    <button id="uploadBtn" class="btn">
-                        <i class="fas fa-file-upload"></i> 匯入題庫
-                    </button>
-                </div>
+                <label for="student-name">姓名：</label>
+                <input type="text" id="student-name" placeholder="請輸入您的姓名">
+                <button id="uploadBtn" class="btn">匯入題庫</button>
                 <!-- 題庫列表容器 -->
-                <div id="quiz-list" class="quiz-list" style="display: none;"></div>
-                <div id="quizInfo" style="display: none;"></div>
-                <button id="start-btn" class="btn" disabled>開始測驗</button>
+                <div id="quiz-list" class="quiz-list"></div>
+                <!-- 題庫信息顯示區域 -->
+                <div id="quizInfo" class="quiz-info"></div>
             </div>
+            <button id="start-btn" class="btn" disabled>開始測驗</button>
         </div>
 
-        <!-- 測驗畫面 -->
-        <div id="quiz-screen" class="screen">
-            <div class="question-container">
-                <div class="progress-bar">
-                    <div class="progress"></div>
-                </div>
-                <div class="progress-text"></div>
-                <h2 id="question-text"></h2>
-                <div id="options-container" class="options-container"></div>
+        <div id="quiz-screen" class="section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress"></div>
             </div>
+            <div class="question-section">
+                <h3 id="question-text">問題文本</h3>
+                <div id="options-container" class="options-container">
+                    <!-- 選項將在這裡動態生成 -->
+                </div>
+            </div>
+            <button id="next-btn" class="btn" disabled>下一題</button>
         </div>
 
-        <!-- 結果畫面 -->
-        <div id="result-screen" class="screen">
-            <div class="result-content">
-                <div class="score-box">
-                    <h3>得分</h3>
-                    <div id="final-score" class="score">0</div>
-                    <div class="score-label">/ 100</div>
-                </div>
-                <div class="score-box">
-                    <h3>貢獻度</h3>
-                    <div id="contribution-score" class="score">0</div>
-                    <div class="score-label">%</div>
-                </div>
-                <div id="feedback" class="feedback"></div>
-                <div id="wrong-questions" class="wrong-questions"></div>
+        <div id="result-screen" class="section" style="display: none;">
+            <h2>測驗結果</h2>
+            <div class="result-details">
+                <p>姓名: <span id="student-name-display"></span></p>
+                <p>得分: <span id="final-score"></span></p>
+                <p>貢獻: <span id="contribution-score"></span></p>
+                <p>評價: <span id="feedback"></span></p>
             </div>
+            <div id="wrong-questions" class="wrong-questions">
+                <h3>錯誤題目回顧</h3>
+                <!-- 錯誤題目將在這裡動態生成 -->
+            </div>
+            <button id="save-result" class="btn">保存結果</button>
         </div>
     </div>
+
+    <!-- 調試信息區域 -->
+    <div id="debug-info" style="display: none; max-height: 300px; overflow-y: auto; background-color: #f8f8f8; border: 1px solid #ddd; margin-top: 20px; padding: 10px; font-family: monospace; font-size: 12px; color: #333; position: fixed; bottom: 0; right: 0; width: 400px; z-index: 9999;">
+        <h3 style="margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 5px;">調試信息</h3>
+    </div>
+
+    <!-- 模擬文件輸入（隱藏） -->
+    <input type="file" id="questionFile" style="display: none;">
     <script src="script.js"></script>
 </body>
 </html> 

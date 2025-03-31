@@ -13,7 +13,8 @@ const CONFIG = {
     questionsPath: window.location.hostname.includes('github.io') 
         ? './questions/'  // 修改為相對路徑
         : './questions/',  // 本地開發路徑
-    isLocalDevelopment: !window.location.hostname.includes('github.io')
+    isLocalDevelopment: !window.location.hostname.includes('github.io'),
+    noCacheParam: null
 };
 
 // 修改變量定義
@@ -44,6 +45,27 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 // 初始化應用程序
 function initializeApp() {
     console.log('初始化測驗系統...');
+    
+    // 添加調試函數
+    window.debugLog = function(message) {
+        console.log(message);
+        const debugInfo = document.getElementById('debug-info');
+        if (debugInfo) {
+            debugInfo.style.display = 'block';
+            const logMessage = document.createElement('div');
+            logMessage.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            debugInfo.appendChild(logMessage);
+            // 限制顯示的消息數量
+            if (debugInfo.children.length > 50) {
+                debugInfo.removeChild(debugInfo.firstChild);
+            }
+            // 自動滾動到底部
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+    };
+    
+    // 啟用調試模式
+    debugLog('測驗系統初始化中...');
 
     // 獲取所有DOM元素
     startScreen = document.getElementById('start-screen');
@@ -63,14 +85,18 @@ function initializeApp() {
     saveResultButton = document.getElementById('save-result');
     quizInfoDiv = document.getElementById('quizInfo');
     quizList = document.getElementById('quiz-list');
+    
+    // 檢查關鍵元素是否存在
+    if (!uploadBtn) debugLog('警告: 找不到上傳按鈕元素!');
+    if (!quizList) debugLog('警告: 找不到題庫列表容器!');
+    if (!startBtn) debugLog('警告: 找不到開始按鈕元素!');
 
     // 確保必要的DOM元素存在
     if (!quizList) {
-        console.warn('找不到題庫列表容器，嘗試創建一個');
+        debugLog('找不到題庫列表容器，嘗試創建一個');
         quizList = document.createElement('div');
         quizList.id = 'quiz-list';
         quizList.className = 'quiz-list';
-        quizList.style.display = 'none';
         
         // 找到合適的位置插入題庫列表
         const inputGroup = document.querySelector('.input-group');
@@ -80,19 +106,22 @@ function initializeApp() {
             } else {
                 inputGroup.appendChild(quizList);
             }
-        } else if (startScreen) {
-            startScreen.appendChild(quizList);
+            debugLog('成功創建題庫列表容器');
         } else {
             document.body.appendChild(quizList);
-            console.error('無法找到合適的容器來放置題庫列表');
+            debugLog('無法找到合適的容器來放置題庫列表，已添加到body');
         }
     }
 
     // 添加事件監聽器
     if (uploadBtn) {
+        // 先移除可能存在的舊事件監聽器
+        uploadBtn.removeEventListener('click', handleUploadBtnClick);
+        // 添加新的事件監聽器
         uploadBtn.addEventListener('click', handleUploadBtnClick);
+        debugLog('已為匯入題庫按鈕添加事件監聽器');
     } else {
-        console.error('找不到上傳按鈕元素');
+        debugLog('錯誤: 找不到上傳按鈕元素');
     }
 
     if (studentNameInput) {
@@ -105,12 +134,17 @@ function initializeApp() {
     if (startBtn) {
         startBtn.addEventListener('click', () => {
             studentName = studentNameInput.value.trim();
-            if (!studentName || !currentQuestions) return;
+            if (!studentName || !currentQuestions) {
+                debugLog('開始測驗失敗: 姓名或題庫未設置');
+                if (!studentName) alert('請輸入姓名');
+                else if (!currentQuestions || currentQuestions.length === 0) alert('請先匯入題庫');
+                return;
+            }
 
             try {
                 startQuiz();
             } catch (error) {
-                console.error('開始測驗失敗:', error);
+                debugLog('開始測驗失敗: ' + error.message);
                 alert('開始測驗失敗，請稍後再試');
             }
         });
@@ -120,15 +154,42 @@ function initializeApp() {
     window.onbeforeunload = function() {
         return "確定要離開測驗嗎？您的進度將會遺失。";
     };
+    
+    // 初始化完成
+    debugLog('測驗系統初始化完成');
+    
+    // 嘗試立即加載題庫
+    setTimeout(handleUploadBtnClick, 500);
 }
 
 // 處理上傳按鈕點擊事件
 async function handleUploadBtnClick() {
     try {
+        debugLog('匯入題庫按鈕被點擊');
+        
+        // 添加視覺反饋，讓用戶知道按鈕已被點擊
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '載入中...';
+            uploadBtn.style.background = '#a29bfe';
+        }
+        
+        // 添加防緩存參數
+        const cacheParam = '?nocache=' + new Date().getTime();
+        CONFIG.noCacheParam = cacheParam;
+        
         // 重新載入可用題庫
         await loadAvailableQuizzes();
         
+        // 恢復按鈕狀態
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '匯入題庫';
+            uploadBtn.style.background = '';
+        }
+        
         if (availableQuizzes.length === 0) {
+            debugLog('未找到任何題庫文件');
             alert('未找到任何題庫文件。請確保questions目錄中有可用的題庫文件。');
             return;
         }
@@ -137,17 +198,24 @@ async function handleUploadBtnClick() {
         displayQuizList();
         
     } catch (error) {
+        debugLog('載入題庫失敗: ' + error.message);
         console.error('載入題庫失敗:', error);
         alert('載入題庫失敗：' + error.message + '\n請確保 questions 目錄中有正確的題庫文件。');
+        
+        // 恢復按鈕狀態
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '匯入題庫';
+            uploadBtn.style.background = '';
+        }
     }
 }
 
 // 載入可用題庫
 async function loadAvailableQuizzes() {
     try {
-        console.log('正在載入題庫列表...');
-        console.log('當前路徑:', CONFIG.questionsPath);
-        console.log('是否本地開發:', CONFIG.isLocalDevelopment);
+        debugLog('正在載入題庫列表...');
+        debugLog('當前路徑: ' + CONFIG.questionsPath);
         
         // 預設的題庫文件名列表（確保原有題庫文件被包含）
         const possibleQuizFiles = [
@@ -162,7 +230,7 @@ async function loadAvailableQuizzes() {
         
         // 如果是本地開發環境，使用內嵌的題庫列表
         if (CONFIG.isLocalDevelopment) {
-            console.log('檢測到本地開發環境，使用內嵌題庫列表');
+            debugLog('本地開發環境，使用內嵌題庫列表');
             const defaultQuizzes = [
                 {
                     name: "海島組測驗",
@@ -187,19 +255,24 @@ async function loadAvailableQuizzes() {
             ];
             
             availableQuizzes = defaultQuizzes;
-            console.log('使用內嵌題庫列表:', availableQuizzes);
+            debugLog('使用內嵌題庫列表: ' + availableQuizzes.length + '個題庫');
             displayQuizList();
             return;
         }
         
         // 自動探測題庫文件
         availableQuizzes = [];
-        console.log('開始自動探測questions目錄中的JSON文件');
+        debugLog('開始自動探測questions目錄中的JSON文件');
         
         // 先檢查預設的題庫文件
         for (const file of possibleQuizFiles) {
             try {
-                const response = await fetch(CONFIG.questionsPath + file);
+                const cacheParam = CONFIG.noCacheParam || '';
+                const response = await fetch(CONFIG.questionsPath + file + cacheParam, {
+                    cache: 'no-store' // 禁用緩存
+                });
+                debugLog(`嘗試讀取文件 ${file}: ${response.status}`);
+                
                 if (response.ok) {
                     try {
                         const quizData = await response.json();
@@ -209,97 +282,62 @@ async function loadAvailableQuizzes() {
                                 file: file,
                                 description: quizData.info?.description || '自動探測的題庫'
                             });
-                            console.log(`發現題庫文件: ${file}`);
+                            debugLog(`發現題庫文件: ${file}`);
+                        } else {
+                            debugLog(`文件 ${file} 不含有效題目數據`);
                         }
                     } catch (parseError) {
-                        console.log(`題庫文件 ${file} 格式無效:`, parseError);
+                        debugLog(`題庫文件 ${file} 格式無效: ${parseError.message}`);
                     }
+                } else {
+                    debugLog(`文件 ${file} 不存在或無法訪問: ${response.status}`);
                 }
             } catch (error) {
-                console.log(`檢查題庫文件 ${file} 時出錯:`, error);
+                debugLog(`檢查題庫文件 ${file} 時出錯: ${error.message}`);
             }
         }
         
-        // 嘗試尋找更多題庫文件（通過命名模式）
-        const filePatterns = [
-            "questions_*.json", 
-            "quiz_*.json", 
-            "test_*.json", 
-            "exam_*.json"
-        ];
-        
-        // 嘗試使用通配符數字來探測更多文件
-        for (let i = 1; i <= 20; i++) {
-            const potentialFiles = [
-                `questions_${i}.json`,
-                `quiz_${i}.json`,
-                `test_${i}.json`,
-                `exam_${i}.json`
-            ];
-            
-            for (const file of potentialFiles) {
-                // 檢查是否已經添加過這個文件
-                if (availableQuizzes.some(q => q.file === file)) {
-                    continue;
-                }
-                
-                try {
-                    const response = await fetch(CONFIG.questionsPath + file);
-                    if (response.ok) {
-                        try {
-                            const quizData = await response.json();
-                            if (quizData && quizData.questions) {
-                                availableQuizzes.push({
-                                    name: quizData.info?.name || file.replace(/_/g, ' ').replace('.json', ''),
-                                    file: file,
-                                    description: quizData.info?.description || '自動探測的題庫'
-                                });
-                                console.log(`發現題庫文件: ${file}`);
-                            }
-                        } catch (parseError) {
-                            console.log(`題庫文件 ${file} 格式無效:`, parseError);
-                        }
-                    }
-                } catch (error) {
-                    // 靜默失敗，因為我們只是在嘗試探測可能的文件
-                }
-            }
-        }
-        
-        // 嘗試加載quiz_list.json作為補充（不再優先，只作為補充）
+        // 嘗試加載quiz_list.json作為補充
         try {
-            const quizListUrl = CONFIG.questionsPath + 'quiz_list.json';
-            console.log('補充方式從quiz_list.json載入題庫列表:', quizListUrl);
+            const cacheParam = CONFIG.noCacheParam || '';
+            const quizListUrl = CONFIG.questionsPath + 'quiz_list.json' + cacheParam;
+            debugLog('從quiz_list.json載入題庫列表: ' + quizListUrl);
             
-            const response = await fetch(quizListUrl);
+            const response = await fetch(quizListUrl, {
+                cache: 'no-store' // 禁用緩存
+            });
+            
             if (response.ok) {
                 const data = await response.json();
                 if (data.quizzes && Array.isArray(data.quizzes)) {
-                    console.log('從quiz_list.json找到題庫列表:', data.quizzes);
+                    debugLog('從quiz_list.json找到題庫列表: ' + data.quizzes.length + '個題庫');
                     
                     // 合併題庫，避免重複添加
                     for (const quiz of data.quizzes) {
                         if (!availableQuizzes.some(q => q.file === quiz.file)) {
                             availableQuizzes.push(quiz);
-                            console.log(`從quiz_list.json添加題庫: ${quiz.name}`);
+                            debugLog(`從quiz_list.json添加題庫: ${quiz.name}`);
                         }
                     }
                 }
+            } else {
+                debugLog('quiz_list.json不存在或無法訪問: ' + response.status);
             }
         } catch (error) {
-            console.log('從quiz_list.json載入失敗（非關鍵錯誤）:', error);
+            debugLog('從quiz_list.json載入失敗: ' + error.message);
         }
         
-        console.log('最終探測到的題庫列表:', availableQuizzes);
+        debugLog('最終探測到的題庫列表: ' + availableQuizzes.length + '個題庫');
         
         if (availableQuizzes.length === 0) {
-            console.warn('未找到任何題庫文件');
+            debugLog('未找到任何題庫文件');
             alert('未找到任何題庫文件。請確保questions目錄中包含有效的JSON題庫文件。');
         }
         
         // 顯示題庫列表
         displayQuizList();
     } catch (error) {
+        debugLog('載入題庫列表失敗: ' + error.message);
         console.error('載入題庫列表失敗:', error);
         alert('載入題庫列表失敗：' + error.message + '\n請檢查瀏覽器控制台以獲取更多信息。');
     }
@@ -307,98 +345,217 @@ async function loadAvailableQuizzes() {
 
 // 顯示題庫列表
 function displayQuizList() {
-    console.log('開始顯示題庫列表...');
-    
-    // 確保列表容器存在
-    if (!quizList) {
-        console.error('找不到題庫列表容器 (id="quiz-list")');
-        alert('系統錯誤：找不到題庫列表容器。請檢查控制台獲取更多信息。');
-        return;
-    }
-    
-    // 清空列表
-    quizList.innerHTML = '';
-    
-    // 如果沒有可用題庫，顯示提示信息
-    if (!availableQuizzes || availableQuizzes.length === 0) {
-        quizList.innerHTML = '<p style="text-align: center; color: white;">目前沒有可用的題庫</p>';
-        quizList.style.display = 'block';
-        return;
-    }
-    
-    // 顯示題庫列表
-    availableQuizzes.forEach(quiz => {
-        const quizButton = document.createElement('button');
-        quizButton.className = 'quiz-option';
-        quizButton.textContent = quiz.name;
-        quizButton.setAttribute('data-file', quiz.file);
-        quizButton.title = quiz.description || '';
-        quizButton.addEventListener('click', () => selectQuiz(quiz));
-        quizList.appendChild(quizButton);
-    });
-    
-    // 顯示列表容器
-    quizList.style.display = 'flex';
-    
-    console.log('題庫列表顯示完成');
-}
-
-// 選擇題庫
-async function selectQuiz(quiz) {
     try {
-        console.log('選擇題庫:', quiz);
+        debugLog('開始顯示題庫列表，共有題庫數量: ' + availableQuizzes.length);
         
-        // 移除其他按鈕的選中狀態
-        document.querySelectorAll('.quiz-option').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        // 添加當前按鈕的選中狀態
-        event.target.classList.add('selected');
-        
-        // 如果是本地開發環境，使用內嵌的題目數據
-        if (CONFIG.isLocalDevelopment) {
-            console.log('檢測到本地開發環境，使用內嵌題目數據');
-            const response = await fetch(CONFIG.questionsPath + quiz.file);
-            if (!response.ok) {
-                throw new Error(`無法載入題庫文件: ${response.status} ${response.statusText}`);
+        // 確保quizList元素存在
+        if (!quizList) {
+            debugLog('嘗試重新獲取題庫列表容器');
+            quizList = document.getElementById('quiz-list');
+            
+            // 如果仍然不存在，創建一個
+            if (!quizList) {
+                debugLog('需要重新創建題庫列表容器');
+                quizList = document.createElement('div');
+                quizList.id = 'quiz-list';
+                quizList.className = 'quiz-list';
+                
+                // 找到合適的位置插入
+                const inputGroup = document.querySelector('.input-group');
+                if (inputGroup) {
+                    if (quizInfoDiv) {
+                        inputGroup.insertBefore(quizList, quizInfoDiv);
+                    } else {
+                        inputGroup.appendChild(quizList);
+                    }
+                    debugLog('重新創建題庫列表容器成功');
+                } else {
+                    document.body.appendChild(quizList);
+                    debugLog('無法找到合適的容器，將題庫列表添加到body');
+                }
             }
-            const data = await response.json();
-            console.log('成功載入題庫:', data);
-            
-            // 保存題庫信息
-            quizInfo = data.info;
-            currentQuestions = data.questions;
-            
-            // 啟用開始按鈕
-            startBtn.disabled = !studentNameInput.value.trim();
-            
-            console.log('題庫選擇完成');
+        }
+        
+        // 清空列表
+        quizList.innerHTML = '';
+        quizList.style.display = 'block';
+        
+        // 添加標題
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = '可用題庫列表';
+        titleElement.style.color = '#6c5ce7';
+        titleElement.style.borderBottom = '2px solid #a29bfe';
+        titleElement.style.paddingBottom = '10px';
+        titleElement.style.marginBottom = '15px';
+        quizList.appendChild(titleElement);
+        
+        // 檢查是否有可用題庫
+        if (!availableQuizzes || availableQuizzes.length === 0) {
+            debugLog('沒有找到可用題庫，顯示提示信息');
+            const noQuizzesMsg = document.createElement('p');
+            noQuizzesMsg.textContent = '沒有找到可用的題庫。請確保 questions 目錄中有有效的題庫文件。';
+            noQuizzesMsg.style.color = '#e74c3c';
+            noQuizzesMsg.style.padding = '10px';
+            noQuizzesMsg.style.backgroundColor = '#ffecdb';
+            noQuizzesMsg.style.borderRadius = '5px';
+            quizList.appendChild(noQuizzesMsg);
             return;
         }
         
-        // 如果是通過 HTTP/HTTPS 訪問，從服務器載入題庫
-        const quizUrl = CONFIG.questionsPath + quiz.file;
-        console.log('嘗試載入題庫文件:', quizUrl);
+        // 創建題庫按鈕容器
+        const quizButtonsContainer = document.createElement('div');
+        quizButtonsContainer.style.display = 'flex';
+        quizButtonsContainer.style.flexWrap = 'wrap';
+        quizButtonsContainer.style.gap = '10px';
+        quizButtonsContainer.style.justifyContent = 'flex-start';
+        quizList.appendChild(quizButtonsContainer);
         
-        const response = await fetch(quizUrl);
-        if (!response.ok) {
-            throw new Error(`無法載入題庫文件: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        console.log('成功載入題庫:', data);
+        // 添加題庫按鈕
+        availableQuizzes.forEach((quiz, index) => {
+            debugLog(`添加題庫按鈕: ${quiz.name} (${quiz.file})`);
+            const button = document.createElement('button');
+            button.textContent = quiz.name || `題庫 ${index + 1}`;
+            button.className = 'quiz-button';
+            button.style.backgroundColor = '#f1f1f1';
+            button.style.color = '#333';
+            button.style.border = '1px solid #ddd';
+            button.style.borderRadius = '5px';
+            button.style.padding = '8px 15px';
+            button.style.margin = '5px';
+            button.style.cursor = 'pointer';
+            button.style.transition = 'all 0.3s ease';
+            
+            // 添加懸停效果
+            button.addEventListener('mouseover', () => {
+                button.style.backgroundColor = '#a29bfe';
+                button.style.color = '#fff';
+            });
+            
+            button.addEventListener('mouseout', () => {
+                if (selectedQuizIndex !== index) {
+                    button.style.backgroundColor = '#f1f1f1';
+                    button.style.color = '#333';
+                }
+            });
+            
+            // 添加點擊事件
+            button.addEventListener('click', () => {
+                debugLog(`用戶選擇題庫: ${quiz.name}`);
+                selectQuiz(index);
+            });
+            
+            quizButtonsContainer.appendChild(button);
+        });
         
-        // 保存題庫信息
-        quizInfo = data.info;
-        currentQuestions = data.questions;
+        // 如果題庫列表不可見，讓其可見
+        quizList.style.display = 'block';
         
-        // 啟用開始按鈕
-        startBtn.disabled = !studentNameInput.value.trim();
-        
-        console.log('題庫選擇完成');
+        debugLog('題庫列表顯示完成');
     } catch (error) {
-        console.error('載入題庫失敗:', error);
-        alert('載入題庫失敗：' + error.message + '\n請檢查瀏覽器控制台以獲取更多信息。');
+        debugLog('顯示題庫列表失敗: ' + error.message);
+        console.error('顯示題庫列表失敗:', error);
+        alert('顯示題庫列表失敗: ' + error.message);
+    }
+}
+
+// 選擇題庫
+async function selectQuiz(index) {
+    try {
+        debugLog(`開始選擇題庫，索引: ${index}`);
+        
+        // 檢查題庫索引是否有效
+        if (index < 0 || index >= availableQuizzes.length) {
+            debugLog(`無效題庫索引: ${index}`);
+            alert('選擇題庫失敗: 無效的題庫索引');
+            return;
+        }
+        
+        // 更新選中的題庫索引
+        selectedQuizIndex = index;
+        const selectedQuiz = availableQuizzes[index];
+        debugLog(`選擇的題庫: ${selectedQuiz.name} (${selectedQuiz.file})`);
+        
+        // 更新按鈕樣式
+        const quizButtons = document.querySelectorAll('.quiz-button');
+        quizButtons.forEach((button, idx) => {
+            if (idx === index) {
+                // 選中的按鈕
+                button.style.backgroundColor = '#6c5ce7';
+                button.style.color = 'white';
+                button.style.fontWeight = 'bold';
+                button.style.transform = 'scale(1.05)';
+                button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+            } else {
+                // 未選中的按鈕
+                button.style.backgroundColor = '#f1f1f1';
+                button.style.color = '#333';
+                button.style.fontWeight = 'normal';
+                button.style.transform = 'scale(1)';
+                button.style.boxShadow = 'none';
+            }
+        });
+        
+        // 載入題庫文件
+        debugLog(`嘗試載入題庫文件: ${selectedQuiz.file}`);
+        const quizUrl = CONFIG.questionsPath + selectedQuiz.file + (CONFIG.noCacheParam || '');
+        
+        try {
+            const response = await fetch(quizUrl, {
+                cache: 'no-store' // 禁用緩存
+            });
+            
+            if (!response.ok) {
+                debugLog(`載入題庫失敗: 網絡狀態碼 ${response.status}`);
+                alert(`載入題庫失敗: 網絡狀態碼 ${response.status}`);
+                return;
+            }
+            
+            const quizData = await response.json();
+            
+            if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+                debugLog('載入題庫失敗: 題庫格式無效');
+                alert('載入題庫失敗: 題庫格式無效，必須包含questions陣列');
+                return;
+            }
+            
+            // 更新當前題庫數據
+            currentQuizData = quizData;
+            currentQuestions = quizData.questions;
+            
+            // 顯示題庫信息
+            if (quizInfoDiv) {
+                quizInfoDiv.innerHTML = `
+                    <div style="border: 1px solid #a29bfe; background-color: #f1f1ff; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h3 style="color: #6c5ce7; margin-top: 0;">已選擇題庫: ${selectedQuiz.name}</h3>
+                        <p style="margin-bottom: 5px;"><strong>描述:</strong> ${selectedQuiz.description || '無描述'}</p>
+                        <p style="margin-bottom: 5px;"><strong>題目數量:</strong> ${currentQuestions.length} 題</p>
+                        <p style="margin-bottom: 0;"><strong>狀態:</strong> <span style="color: green;">已準備好</span></p>
+                    </div>
+                `;
+                quizInfoDiv.style.display = 'block';
+            }
+            
+            // 更新開始按鈕狀態
+            if (startBtn) {
+                // 只有當學生姓名輸入框有值時，才啟用開始按鈕
+                const name = studentNameInput ? studentNameInput.value.trim() : '';
+                startBtn.disabled = !name;
+                startBtn.style.backgroundColor = name ? '#6c5ce7' : '#ccc';
+                startBtn.style.cursor = name ? 'pointer' : 'not-allowed';
+            }
+            
+            debugLog(`題庫載入成功: ${selectedQuiz.name} (${currentQuestions.length}題)`);
+            
+        } catch (error) {
+            debugLog(`載入題庫失敗: ${error.message}`);
+            console.error('載入題庫文件失敗:', error);
+            alert(`載入題庫失敗: ${error.message}`);
+        }
+        
+    } catch (error) {
+        debugLog(`選擇題庫過程中出錯: ${error.message}`);
+        console.error('選擇題庫失敗:', error);
+        alert(`選擇題庫失敗: ${error.message}`);
     }
 }
 
@@ -753,27 +910,49 @@ async function loadQuestions(quizType) {
 
 // 修改 startQuiz 函數
 function startQuiz() {
+    if (!studentNameInput.value.trim()) {
+        alert('請輸入姓名');
+        studentNameInput.focus();
+        return;
+    }
+    
+    if (!currentQuestions || currentQuestions.length === 0) {
+        alert('請先匯入題庫');
+        return;
+    }
+    
     try {
-        if (!currentQuestions || currentQuestions.length === 0) {
-            throw new Error('請先匯入題庫');
+        console.log('開始測驗...');
+        console.log('題庫信息:', quizInfo);
+        console.log('總題數:', currentQuestions.length);
+        
+        // 記錄開始時間
+        startTime = new Date();
+        
+        // 打亂題目順序
+        shuffleQuestions(currentQuestions);
+        
+        // 如果題目數量超過設定的最大題數，只取前N題
+        if (currentQuestions.length > CONFIG.maxQuestionsPerQuiz) {
+            console.log(`題目數量(${currentQuestions.length})超過最大限制(${CONFIG.maxQuestionsPerQuiz})，將只使用前${CONFIG.maxQuestionsPerQuiz}題`);
+            currentQuestions = currentQuestions.slice(0, CONFIG.maxQuestionsPerQuiz);
         }
-
-        // 隨機打亂題目順序
-        currentQuestions = [...currentQuestions].sort(() => Math.random() - 0.5);
-
+        
+        // 重置測驗數據
         currentQuestionIndex = 0;
         score = 0;
-        startTime = new Date(); // 記錄開始時間
-
-        // 隱藏開始畫面，顯示測驗畫面
+        
+        // 切換到測驗畫面
         startScreen.classList.remove('active');
         quizScreen.classList.add('active');
-
-        // 更新第一個問題
-        updateQuestion();
+        
+        // 顯示第一個問題
+        showQuestion();
+        
+        console.log('測驗開始');
     } catch (error) {
-        console.error('開始測驗失敗:', error);
-        alert('開始測驗失敗：' + error.message);
+        console.error('開始測驗時發生錯誤:', error);
+        alert('開始測驗失敗: ' + error.message);
     }
 }
 
