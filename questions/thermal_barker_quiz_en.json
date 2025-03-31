@@ -1,0 +1,208 @@
+{
+    "info": {
+        "name": "Thermal Response Group (Project)",
+        "description": "Test on Barker Theory and Thermal Response Theory"
+    },
+    "questions": [
+        {
+            "question": "How is the flow dimension set in Barker's model?",
+            "options": [
+                "Only one-dimensional",
+                "Only two-dimensional",
+                "Only three-dimensional",
+                "Can be non-integer dimension"
+            ],
+            "correct": 3
+        },
+        {
+            "question": "Barker's model is primarily used for hydraulic tests in what geological environment?",
+            "options": [
+                "Porous media",
+                "Fractured rock",
+                "Homogeneous sandy soil",
+                "Impermeable rock layers"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "Which mathematical method does Barker's model primarily use to derive solutions?",
+            "options": [
+                "Finite difference method",
+                "Finite element method",
+                "Fourier transform",
+                "Laplace transform"
+            ],
+            "correct": 3
+        },
+        {
+            "question": "What special factor does Barker's theory consider?",
+            "options": [
+                "Fracture surface water storage",
+                "Well bore storage and skin effect",
+                "Groundwater temperature variation",
+                "Aquifer thickness variation"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "In Barker's theory, what does the skin factor primarily describe?",
+            "options": [
+                "Porosity of geological materials",
+                "Hydraulic loss near well wall",
+                "Well radius",
+                "Flow rate change"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "Why is Barker’s model called the generalized radial flow (GRF) model?",
+            "options": [
+                "It considers non-integer dimensional radial flow",
+                "Only suitable for radial flow",
+                "Only considers well storage effect",
+                "Ignores skin effect"
+            ],
+            "correct": 0
+        },
+        {
+            "question": "In Barker's theory, flow tests remain transient if the flow dimension is less than or equal to?",
+            "options": [
+                "1",
+                "2",
+                "3",
+                "No limit"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "What type of test is Barker's theory most applicable to?",
+            "options": [
+                "Single well tests",
+                "Interference tests",
+                "Groundwater recharge tests",
+                "Soil permeability tests"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "In Barker's model, for dimensions greater than 2, flow eventually reaches which state?",
+            "options": [
+                "Persistent transient state",
+                "Oscillatory state",
+                "Steady state",
+                "Non-steady state"
+            ],
+            "correct": 2
+        },
+        {
+            "question": "According to Barker’s theory, well bore storage effects are most significant during which stage of testing?",
+            "options": [
+                "Early testing stage",
+                "Late testing stage",
+                "Entire testing period",
+                "Independent of time"
+            ],
+            "correct": 0
+        },
+        {
+            "question": "Thermal response tests (TRT) were originally designed to estimate what ground parameter?",
+            "options": [
+                "Groundwater flow velocity",
+                "Soil density",
+                "Thermal conductivity",
+                "Porosity"
+            ],
+            "correct": 2
+        },
+        {
+            "question": "What is the basic assumption of the Infinite Line Source (ILS) model?",
+            "options": [
+                "Infinite extent ground, infinitesimal borehole radius",
+                "Finite heat source size",
+                "Constant temperature gradient",
+                "Fixed heat source radius"
+            ],
+            "correct": 0
+        },
+        {
+            "question": "What is the recommended minimum duration for thermal response tests (TRT)?",
+            "options": [
+                "12 hours",
+                "24 hours",
+                "48 hours",
+                "72 hours"
+            ],
+            "correct": 2
+        },
+        {
+            "question": "In thermal response tests, when does grout capacity most significantly affect the temperature data?",
+            "options": [
+                "Early testing period",
+                "Mid testing period",
+                "Late testing period",
+                "Uniformly affects all periods"
+            ],
+            "correct": 0
+        },
+        {
+            "question": "During thermal response tests, when is the sensitivity of temperature change to thermal conductivity highest?",
+            "options": [
+                "Immediately at start",
+                "After reaching steady state",
+                "At the end of the test",
+                "No specific time"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "What advantage does the Infinite Cylinder-Surface Source (ICSS) model have over the ILS model in thermal response tests?",
+            "options": [
+                "Considers higher thermal conductivity",
+                "More accurate early-time temperature prediction",
+                "Reduces numerical complexity",
+                "Ignores grout capacity effect"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "Which mathematical transformation is commonly used in thermal response test modeling?",
+            "options": [
+                "Fourier transform",
+                "Laplace transform",
+                "Fourier series",
+                "Finite element method"
+            ],
+            "correct": 1
+        },
+        {
+            "question": "In thermal response testing, what is the effect of increasing grout capacity on temperature change?",
+            "options": [
+                "Reduces temperature change rate",
+                "Increases temperature change rate",
+                "No effect",
+                "Instantly stabilizes temperature"
+            ],
+            "correct": 0
+        },
+        {
+            "question": "In thermal response tests (TRT), which data is required to estimate the ground's thermal capacity?",
+            "options": [
+                "Soil porosity",
+                "Water flow rate",
+                "Time-temperature data",
+                "Groundwater level"
+            ],
+            "correct": 2
+        },
+        {
+            "question": "Which optimization algorithm is frequently used in thermal response test analysis?",
+            "options": [
+                "Genetic algorithm",
+                "Levenberg-Marquardt algorithm",
+                "Gradient descent algorithm",
+                "Bayesian algorithm"
+            ],
+            "correct": 1
+        }
+    ]
+}
