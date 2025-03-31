@@ -16,24 +16,6 @@ const CONFIG = {
     isLocalDevelopment: !window.location.hostname.includes('github.io')
 };
 
-// 防止重新整理和重複作答
-window.onbeforeunload = function() {
-    return "確定要離開測驗嗎？您的進度將會遺失。";
-};
-
-// 檢查是否已經完成測驗
-function checkQuizCompletion(quizType) {
-    // 移除檢查，允許重複作答
-    return false;
-}
-
-// 標記測驗完成
-function markQuizCompleted(quizType) {
-    // 移除記錄，允許重複作答
-    // localStorage.setItem(`quizCompleted_${quizType}`, 'true');
-    // localStorage.setItem(`completionTime_${quizType}`, new Date().toISOString());
-}
-
 // 修改變量定義
 let currentQuiz = null;
 let currentQuestions = [];
@@ -47,26 +29,118 @@ let endTime = null;
 // 添加文件上傳相關變量
 let uploadedQuestions = null;
 
-// DOM 元素
-const startScreen = document.getElementById('start-screen');
-const quizScreen = document.getElementById('quiz-screen');
-const resultScreen = document.getElementById('result-screen');
-const studentNameInput = document.getElementById('student-name');
-const startBtn = document.getElementById('start-btn');
-const questionText = document.getElementById('question-text');
-const optionsContainer = document.getElementById('options-container');
-const nextBtn = document.getElementById('next-btn');
-const finalScore = document.getElementById('final-score');
-const contributionScore = document.getElementById('contribution-score');
-const feedback = document.getElementById('feedback');
-const wrongQuestions = document.getElementById('wrong-questions');
-const fileInput = document.getElementById('questionFile');
-const uploadBtn = document.getElementById('uploadBtn');
-const saveResultButton = document.getElementById('save-result');
-const quizInfoDiv = document.getElementById('quizInfo');
-
 // 題庫列表
 let availableQuizzes = [];
+
+// DOM 元素變量
+let startScreen, quizScreen, resultScreen, studentNameInput, startBtn;
+let questionText, optionsContainer, nextBtn, finalScore, contributionScore;
+let feedback, wrongQuestions, fileInput, uploadBtn, saveResultButton, quizInfoDiv;
+let quizList;  // 明確定義quizList變量
+
+// 等待DOM完全加載後初始化
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// 初始化應用程序
+function initializeApp() {
+    console.log('初始化測驗系統...');
+
+    // 獲取所有DOM元素
+    startScreen = document.getElementById('start-screen');
+    quizScreen = document.getElementById('quiz-screen');
+    resultScreen = document.getElementById('result-screen');
+    studentNameInput = document.getElementById('student-name');
+    startBtn = document.getElementById('start-btn');
+    questionText = document.getElementById('question-text');
+    optionsContainer = document.getElementById('options-container');
+    nextBtn = document.getElementById('next-btn');
+    finalScore = document.getElementById('final-score');
+    contributionScore = document.getElementById('contribution-score');
+    feedback = document.getElementById('feedback');
+    wrongQuestions = document.getElementById('wrong-questions');
+    fileInput = document.getElementById('questionFile');
+    uploadBtn = document.getElementById('uploadBtn');
+    saveResultButton = document.getElementById('save-result');
+    quizInfoDiv = document.getElementById('quizInfo');
+    quizList = document.getElementById('quiz-list');
+
+    // 確保必要的DOM元素存在
+    if (!quizList) {
+        console.warn('找不到題庫列表容器，嘗試創建一個');
+        quizList = document.createElement('div');
+        quizList.id = 'quiz-list';
+        quizList.className = 'quiz-list';
+        quizList.style.display = 'none';
+        
+        // 找到合適的位置插入題庫列表
+        const inputGroup = document.querySelector('.input-group');
+        if (inputGroup) {
+            if (quizInfoDiv) {
+                inputGroup.insertBefore(quizList, quizInfoDiv);
+            } else {
+                inputGroup.appendChild(quizList);
+            }
+        } else if (startScreen) {
+            startScreen.appendChild(quizList);
+        } else {
+            document.body.appendChild(quizList);
+            console.error('無法找到合適的容器來放置題庫列表');
+        }
+    }
+
+    // 添加事件監聽器
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', handleUploadBtnClick);
+    } else {
+        console.error('找不到上傳按鈕元素');
+    }
+
+    if (studentNameInput) {
+        studentNameInput.addEventListener('input', () => {
+            const name = studentNameInput.value.trim();
+            startBtn.disabled = !name || !currentQuestions;
+        });
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            studentName = studentNameInput.value.trim();
+            if (!studentName || !currentQuestions) return;
+
+            try {
+                startQuiz();
+            } catch (error) {
+                console.error('開始測驗失敗:', error);
+                alert('開始測驗失敗，請稍後再試');
+            }
+        });
+    }
+
+    // 防止重新整理和重複作答
+    window.onbeforeunload = function() {
+        return "確定要離開測驗嗎？您的進度將會遺失。";
+    };
+}
+
+// 處理上傳按鈕點擊事件
+async function handleUploadBtnClick() {
+    try {
+        // 重新載入可用題庫
+        await loadAvailableQuizzes();
+        
+        if (availableQuizzes.length === 0) {
+            alert('未找到任何題庫文件。請確保questions目錄中有可用的題庫文件。');
+            return;
+        }
+        
+        // 直接顯示題庫列表，不使用對話框
+        displayQuizList();
+        
+    } catch (error) {
+        console.error('載入題庫失敗:', error);
+        alert('載入題庫失敗：' + error.message + '\n請確保 questions 目錄中有正確的題庫文件。');
+    }
+}
 
 // 載入可用題庫
 async function loadAvailableQuizzes() {
@@ -209,12 +283,10 @@ async function loadAvailableQuizzes() {
 function displayQuizList() {
     console.log('開始顯示題庫列表...');
     
-    // 獲取題庫列表容器
-    const quizList = document.getElementById('quiz-list');
-    
     // 確保列表容器存在
     if (!quizList) {
-        console.error('找不到題庫列表容器');
+        console.error('找不到題庫列表容器 (id="quiz-list")');
+        alert('系統錯誤：找不到題庫列表容器。請檢查控制台獲取更多信息。');
         return;
     }
     
@@ -303,25 +375,6 @@ async function selectQuiz(quiz) {
         alert('載入題庫失敗：' + error.message + '\n請檢查瀏覽器控制台以獲取更多信息。');
     }
 }
-
-// 修改姓名輸入驗證
-studentNameInput.addEventListener('input', () => {
-    const name = studentNameInput.value.trim();
-    startBtn.disabled = !name || !currentQuestions;
-});
-
-// 修改開始測驗按鈕事件
-startBtn.addEventListener('click', () => {
-    studentName = studentNameInput.value.trim();
-    if (!studentName || !currentQuestions) return;
-
-    try {
-        startQuiz();
-    } catch (error) {
-        console.error('開始測驗失敗:', error);
-        alert('開始測驗失敗，請稍後再試');
-    }
-});
 
 // 隨機打亂題目順序
 function shuffleQuestions(questions) {
@@ -738,26 +791,6 @@ function startTimer() {
         }
     }, 1000);
 }
-
-// 修改文件上傳事件監聽器
-uploadBtn.addEventListener('click', async () => {
-    try {
-        // 重新載入可用題庫
-        await loadAvailableQuizzes();
-        
-        if (availableQuizzes.length === 0) {
-            alert('未找到任何題庫文件。請確保questions目錄中有可用的題庫文件。');
-            return;
-        }
-        
-        // 直接顯示題庫列表，不使用對話框
-        displayQuizList();
-        
-    } catch (error) {
-        console.error('載入題庫失敗:', error);
-        alert('載入題庫失敗：' + error.message + '\n請確保 questions 目錄中有正確的題庫文件。');
-    }
-});
 
 // 解析 CSV 檔案
 function parseCSV(csvData) {
